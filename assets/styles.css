@@ -165,16 +165,16 @@ main { width: min(1480px, calc(100% - 64px)); margin: 0 auto; }
 .library-meta { margin: 32px 0 12px; padding-top: 13px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); }
 .result-count, .last-updated { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.67rem; letter-spacing: 0.04em; text-transform: uppercase; }
 
-.paper-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.paper-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .paper-card { min-width: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 72%, transparent); }
-.card-button { width: 100%; min-height: 430px; padding: 36px 38px 34px; display: flex; flex-direction: column; border: 0; color: inherit; background: transparent; text-align: left; }
+.card-button { width: 100%; min-height: 390px; padding: 30px 28px 28px; display: flex; flex-direction: column; border: 0; color: inherit; background: transparent; text-align: left; }
 .paper-card:hover { z-index: 1; outline: 2px solid var(--accent); outline-offset: -2px; }
 .paper-card:hover .arrow { transform: translate(3px, -3px); color: var(--accent); border-color: var(--accent); }
 .card-top { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 0.73rem; }
 .status { color: var(--hot); font-weight: 800; }
-.paper-card h3 { max-width: 720px; margin: 46px 0 20px; font-family: var(--serif); font-size: clamp(1.95rem, 3.15vw, 3.05rem); font-weight: 600; line-height: 1.08; letter-spacing: -0.04em; }
-.authors { margin: 0; color: var(--muted); font-size: 0.83rem; }
-.one-liner { max-width: 710px; margin: 30px 0 40px; color: var(--ink); font-size: 0.97rem; line-height: 1.85; }
+.paper-card h3 { max-width: 720px; margin: 36px 0 17px; font-family: var(--serif); font-size: clamp(1.65rem, 2vw, 2.2rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.035em; }
+.authors { margin: 0; color: var(--muted); font-size: 0.78rem; }
+.one-liner { max-width: 710px; margin: 24px 0 32px; color: var(--ink); font-size: 0.9rem; line-height: 1.75; }
 .card-bottom { margin-top: auto; display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; }
 .card-tags { display: flex; gap: 6px 10px; flex-wrap: wrap; }
 .card-tags span { color: var(--muted); font-size: 0.7rem; }
@@ -263,8 +263,13 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
   .hero { min-height: auto; padding: 58px 0 46px; grid-template-columns: 1fr; gap: 36px; }
   .hero-quote { grid-column: 1; justify-self: start; }
   .hero h1 { font-size: clamp(3.25rem, 11.5vw, 4.8rem); }
+  .paper-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card-button { min-height: 370px; padding: 28px 26px; }
+  .paper-card h3 { font-size: clamp(1.7rem, 4.5vw, 2.2rem); }
+}
+
+@media (max-width: 700px) {
   .paper-grid { grid-template-columns: 1fr; }
-  .card-button { min-height: 360px; }
 }
 
 @media (max-width: 560px) {
