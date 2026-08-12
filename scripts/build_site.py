@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import re
 import shutil
@@ -234,14 +235,27 @@ def copy_selected_media(papers: list[dict], destination: Path) -> None:
             shutil.copy2(source, target)
 
 
+def write_versioned_index(destination: Path, papers: list[dict]) -> None:
+    digest = hashlib.sha256()
+    digest.update(json.dumps(papers, ensure_ascii=False, sort_keys=True).encode("utf-8"))
+    for source in (ROOT / "index.html", ROOT / "assets" / "styles.css", ROOT / "assets" / "app.js"):
+        digest.update(source.read_bytes())
+    version = digest.hexdigest()[:12]
+    html = (ROOT / "index.html").read_text(encoding="utf-8")
+    for asset in ("styles.css", "papers.js", "app.js"):
+        html = html.replace(f'assets/{asset}"', f'assets/{asset}?v={version}"')
+    destination.write_text(html, encoding="utf-8")
+
+
 def build(papers: list[dict], *, public: bool = False) -> Path:
     output_dir = PUBLIC_DIST_DIR if public else DIST_DIR
     if output_dir.exists():
         shutil.rmtree(output_dir)
     (output_dir / "assets").mkdir(parents=True)
     (output_dir / "notes").mkdir(parents=True)
-    for filename in ("index.html", "404.html", ".nojekyll"):
+    for filename in ("404.html", ".nojekyll"):
         shutil.copy2(ROOT / filename, output_dir / filename)
+    write_versioned_index(output_dir / "index.html", papers)
     for filename in ("styles.css", "app.js"):
         shutil.copy2(ROOT / "assets" / filename, output_dir / "assets" / filename)
     for paper in papers:
