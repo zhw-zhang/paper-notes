@@ -3,6 +3,8 @@
   --canvas: #eceef5;
   --surface: #f9f9fc;
   --surface-2: #e4e7f0;
+  --soft-panel: #f3f4f8;
+  --soft-line: #d9dde8;
   --ink: #172033;
   --muted: #68738a;
   --line: #c7cddd;
@@ -31,6 +33,8 @@
   --canvas: #10131c;
   --surface: #171b27;
   --surface-2: #222838;
+  --soft-panel: #1b202d;
+  --soft-line: #2b3243;
   --ink: #f2f4fb;
   --muted: #a5aec1;
   --line: #353d52;
@@ -164,8 +168,8 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .detail-body p, .detail-body li { font-size: 1.02rem; line-height: 1.95; }
 .detail-body ul, .detail-body ol { padding-left: 1.35rem; }
 .detail-body blockquote { margin: 27px 0; padding-left: 18px; border-left: 3px solid var(--accent); color: var(--muted); }
-.detail-body code { padding: 2px 5px; color: var(--accent); background: var(--surface-2); }
-.detail-body .code-block { margin: 25px 0; padding: 18px 20px; overflow-x: auto; border: 1px solid var(--line); background: var(--surface-2); font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; }
+.detail-body code { padding: 2px 5px; color: var(--accent); background: var(--soft-panel); }
+.detail-body .code-block { margin: 25px 0; padding: 18px 20px; overflow-x: auto; border: 1px solid var(--soft-line); background: var(--soft-panel); font-family: var(--mono); font-size: 0.8rem; line-height: 1.7; }
 .detail-body .code-block code { padding: 0; color: var(--ink); background: transparent; }
 .detail-body a { color: var(--accent); text-underline-offset: 3px; }
 .detail-body .math-block { max-width: 100%; margin: 30px 0; padding: 22px; overflow-x: auto; text-align: center; background: var(--surface-2); }
@@ -195,7 +199,7 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .math-error { padding: 14px; border: 1px solid var(--hot); color: var(--hot); }
 
 .desktop-toc-panel { display: none; }
-.mobile-toc { margin: 0 0 38px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }
+.mobile-toc { margin: 0 0 38px; border: 1px solid var(--soft-line); border-radius: 4px; background: var(--soft-panel); }
 .mobile-toc summary { padding: 11px 13px; cursor: pointer; color: var(--muted); font-size: 0.73rem; font-weight: 700; }
 .mobile-toc nav { padding: 0 11px 11px; }
 .toc-link { width: 100%; padding: 6px 4px; display: block; border: 0; color: var(--muted); background: transparent; font-size: 0.75rem; line-height: 1.4; text-align: left; }
