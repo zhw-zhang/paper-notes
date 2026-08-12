@@ -4,6 +4,7 @@
   const repositoryUrl = "https://github.com/zhw-zhang/paper-notes";
   let lockedScrollY = 0;
   let toastTimer = null;
+  let authorMenuCloseTimer = null;
 
   const elements = {
     grid: document.querySelector("#paper-grid"),
@@ -20,6 +21,7 @@
     downloadMarkdown: document.querySelector("#reader-download-markdown"),
     editNote: document.querySelector("#reader-edit-note"),
     newNote: document.querySelector("#new-note-link"),
+    authorMenu: document.querySelector(".author-menu"),
     print: document.querySelector("#reader-print"),
     desktopToc: document.querySelector("#desktop-toc"),
     mobileToc: document.querySelector("#mobile-toc"),
@@ -280,6 +282,31 @@ accent_headings: []
 `;
     const parameters = new URLSearchParams({ filename, value: template });
     elements.newNote.href = `${repositoryUrl}/new/main/content/papers?${parameters.toString()}`;
+  }
+
+  function initAuthorMenu() {
+    if (!elements.authorMenu) return;
+    const supportsHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const cancelClose = () => clearTimeout(authorMenuCloseTimer);
+    const closeMenu = () => {
+      clearTimeout(authorMenuCloseTimer);
+      elements.authorMenu.open = false;
+    };
+
+    if (supportsHover) {
+      elements.authorMenu.addEventListener("pointerenter", cancelClose);
+      elements.authorMenu.addEventListener("pointerleave", () => {
+        clearTimeout(authorMenuCloseTimer);
+        authorMenuCloseTimer = setTimeout(closeMenu, 180);
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      if (elements.authorMenu.open && !elements.authorMenu.contains(event.target)) closeMenu();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && elements.authorMenu.open) closeMenu();
+    });
   }
 
   function githubEditUrl(sourcePath) {
@@ -548,5 +575,5 @@ accent_headings: []
   });
   addEventListener("popstate", openFromHash);
 
-  initTheme(); configureNewNoteLink(); initStats(); renderTags(); renderPapers(); openFromHash();
+  initTheme(); configureNewNoteLink(); initAuthorMenu(); initStats(); renderTags(); renderPapers(); openFromHash();
 })();
