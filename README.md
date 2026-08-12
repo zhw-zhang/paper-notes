@@ -8,7 +8,7 @@ Public site: <https://zhw-zhang.github.io/paper-notes/>
 
 The site includes a flat card index, search, tags, sorting, light/dark themes, modal and full-window reading, responsive tables of contents, stable deep links, citation copying, Markdown downloads, print-to-PDF, KaTeX, five callout styles, and per-note rights information.
 
-The current public branch contains one original demo note by littlewei and no upstream notes or media. Software portions were adapted from [lawrence-cj/paper-recap](https://github.com/lawrence-cj/paper-recap) under the included MIT License. Note content has its own per-file license; see [COPYRIGHT](COPYRIGHT).
+The current public branch contains one independently rewritten paper recap and one original usage guide by littlewei, with no upstream notes or media. Software portions were adapted from [lawrence-cj/paper-recap](https://github.com/lawrence-cj/paper-recap) under the included MIT License. Note content has its own per-file license; see [COPYRIGHT](COPYRIGHT).
 
 ## Local preview
 

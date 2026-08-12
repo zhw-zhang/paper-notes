@@ -16,6 +16,7 @@ note_author: "littlewei"
 note_license: "All Rights Reserved"
 note_source_url: "https://github.com/zhw-zhang/paper-notes/blob/main/content/papers/YYYY-MM-DD-short-slug.md"
 sharing: "private"
+accent_headings: []
 ---
 
 ## 研究问题
@@ -47,6 +48,12 @@ sharing: "private"
 
 $$
 \mathcal{L}(\theta) = \mathbb{E}_{x \sim p_{\mathrm{data}}}\left[\ell(f_\theta(x), y)\right]
+$$
+
+如果不需要灰色底板，在起始分隔符后加 `{.plain}`：
+
+$$ {.plain}
+x_t = f(x_{t-1})
 $$
 
 ## 关键发现

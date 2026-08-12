@@ -66,12 +66,13 @@
     </aside>`;
   }
 
-  function renderMarkdown(markdown = "") {
+  function renderMarkdown(markdown = "", accentHeadings = []) {
     const lines = markdown.replace(/\r/g, "").split("\n");
     const output = [];
     const toc = [];
     let listType = null;
     let displayMath = null;
+    let displayMathStyle = "";
     let headingIndex = 0;
     const closeList = () => { if (listType) output.push(`</${listType}>`); listType = null; };
 
@@ -81,15 +82,23 @@
       if (displayMath !== null) {
         displayMath.push(raw);
         if (line.endsWith("$$")) {
-          output.push(`<div class="math-block">${escapeHtml(displayMath.join("\n"))}</div>`);
+          const mathClass = displayMathStyle === "plain" ? " math-plain" : "";
+          output.push(`<div class="math-block${mathClass}">${escapeHtml(displayMath.join("\n"))}</div>`);
           displayMath = null;
+          displayMathStyle = "";
         }
         continue;
       }
       if (line.startsWith("$$")) {
         closeList();
+        const styledMath = line.match(/^\$\$\s+\{\.(plain)\}\s*$/);
+        if (styledMath) {
+          displayMath = ["$$"];
+          displayMathStyle = styledMath[1];
+          continue;
+        }
         if (line.length > 2 && line.endsWith("$$")) output.push(`<div class="math-block">${escapeHtml(line)}</div>`);
-        else displayMath = [raw];
+        else { displayMath = [raw]; displayMathStyle = ""; }
         continue;
       }
       if (!line) { closeList(); continue; }
@@ -128,7 +137,8 @@
         headingIndex += 1;
         const id = `section-${headingIndex}`;
         toc.push({ id, level, label: heading[2] });
-        output.push(`<h${level} id="${id}">${inlineMarkdown(heading[2])}</h${level}>`);
+        const accentClass = level === 2 && accentHeadings.includes(heading[2]) ? ' class="section-accent"' : "";
+        output.push(`<h${level}${accentClass} id="${id}">${inlineMarkdown(heading[2])}</h${level}>`);
         continue;
       }
 
@@ -183,29 +193,14 @@
   }
 
   function rightsMarkup(paper) {
-    const citation = citationFor(paper);
     const license = safeLink(paper.paper_license_url, paper.paper_license);
     const source = paper.paper_url
-      ? safeLink(paper.paper_url, "查看原始来源")
-      : "原创演示内容，无外部论文来源";
-    const noteSource = paper.note_source_url
-      ? safeLink(paper.note_source_url, "查看笔记原始版本")
-      : "当前仓库中的原创笔记";
-    const media = paper.media && paper.media.length
-      ? `<ul>${paper.media.map((item) => `<li><strong>${escapeHtml(item.alt)}</strong>：${inlineMarkdown(item.caption)}</li>`).join("")}</ul>`
-      : "<p>本页没有保存或转载原论文图片。</p>";
-    return `<section class="rights-panel" aria-labelledby="rights-title">
-      <p class="section-index">SOURCE / RIGHTS</p>
-      <h2 id="rights-title">作品与许可</h2>
-      <dl class="rights-list">
-        <div><dt>对应作品</dt><dd><cite>${escapeHtml(citation)}</cite><br />${source}</dd></div>
-        <div><dt>作品许可</dt><dd>${license}</dd></div>
-        <div><dt>本页笔记</dt><dd>© ${escapeHtml((paper.read_date || "2026").slice(0, 4))} ${escapeHtml(paper.note_author)}. ${escapeHtml(paper.note_license)}<br />${noteSource}</dd></div>
-        <div><dt>发布状态</dt><dd>${paper.sharing === "public" ? "公开发布" : "仅本地保存，不进入公开构建"}</dd></div>
-      </dl>
-      <div class="media-rights"><h3>图像清单</h3>${media}</div>
-      <p class="rights-disclaimer">原作品、转载图像和本页文字各自适用独立权利。链接与引用不等于取得转载授权；使用前请回到原始来源确认最新条款。</p>
-    </section>`;
+      ? safeLink(paper.paper_url, "原文")
+      : "原创内容";
+    const noteSource = paper.note_source_url ? safeLink(paper.note_source_url, "Markdown") : "本地笔记";
+    const media = paper.media && paper.media.length ? ` · 图像许可见逐图图注` : " · 未转载论文图片";
+    const paperLicense = paper.paper_url ? ` · 论文 ${license}` : "";
+    return `<p class="rights-line" aria-label="来源与许可">${source}${paperLicense} · 笔记 © ${escapeHtml((paper.read_date || "2026").slice(0, 4))} ${escapeHtml(paper.note_author)}, ${escapeHtml(paper.note_license)} · ${noteSource}${media}</p>`;
   }
 
   function tocMarkup(toc) {
@@ -269,13 +264,15 @@
 
   function paperCard(paper) {
     const tags = paper.tags.slice(0, 3).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
+    const authorNames = paper.authors.split(",").map((name) => name.trim()).filter(Boolean);
+    const cardAuthors = authorNames.length > 2 ? `${authorNames[0]} et al.` : paper.authors;
     return `<article class="paper-card">
       <button class="card-button" type="button" data-slug="${escapeHtml(paper.slug)}" aria-label="打开《${escapeHtml(paper.title)}》详情">
         <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span>${formatDate(paper.read_date)}</span></div>
         <h3>${escapeHtml(paper.title)}</h3>
-        <p class="authors">${escapeHtml(paper.authors)}${paper.venue ? ` · ${escapeHtml(paper.venue)}` : ""}</p>
+        <p class="authors">${escapeHtml(cardAuthors)}${paper.venue ? ` · ${escapeHtml(paper.venue)}` : ""}</p>
         <p class="one-liner">${escapeHtml(paper.one_liner)}</p>
-        <div class="card-bottom"><div class="card-tags">${tags}</div><span class="arrow" aria-hidden="true">OPEN →</span></div>
+        <div class="card-bottom"><div class="card-tags">${tags}</div><span class="arrow" aria-hidden="true">↗</span></div>
       </button>
     </article>`;
   }
@@ -283,7 +280,7 @@
   function renderPapers() {
     const papers = filteredPapers();
     elements.grid.innerHTML = papers.map(paperCard).join("");
-    elements.count.textContent = `${papers.length} / ${data.papers.length} PUBLIC NOTES`;
+    elements.count.textContent = `显示 ${papers.length} / ${data.papers.length} 篇记录`;
     elements.empty.hidden = papers.length !== 0;
     elements.grid.hidden = papers.length === 0;
     elements.grid.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => openPaper(button.dataset.slug)));
@@ -325,7 +322,7 @@
     if (!paper) return;
     state.activePaper = paper;
     setFullscreen(false);
-    const rendered = renderMarkdown(paper.body);
+    const rendered = renderMarkdown(paper.body, Array.isArray(paper.accent_headings) ? paper.accent_headings : []);
     elements.dialogContent.innerHTML = `
       <p class="detail-kicker">${escapeHtml(paper.status)} · ${formatDate(paper.read_date)}</p>
       <h1 id="dialog-title">${escapeHtml(paper.title)}</h1>

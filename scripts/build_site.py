@@ -131,6 +131,11 @@ def parse_note(path: Path) -> dict:
         raise ContentError("tags 必须是至少含一个主题的列表")
     if not all(isinstance(tag, str) and tag.strip() for tag in metadata["tags"]):
         raise ContentError("tags 中的每一项都必须是非空文本")
+    accent_headings = metadata.get("accent_headings", [])
+    if not isinstance(accent_headings, list) or not all(
+        isinstance(heading, str) and heading.strip() for heading in accent_headings
+    ):
+        raise ContentError("accent_headings 必须是标题文本列表，例如 [\"核心方法\", \"我的判断\"]")
     try:
         datetime.strptime(str(metadata["read_date"]), "%Y-%m-%d")
     except ValueError as exc:
@@ -164,12 +169,20 @@ def parse_note(path: Path) -> dict:
     body = match.group(2).strip()
     if body.count("$$") % 2:
         raise ContentError("独立公式的 $$ 分隔符没有成对闭合")
+    for math_style in re.findall(r"^\$\$\s+\{\.([^}]+)\}\s*$", body, re.MULTILINE):
+        if math_style != "plain":
+            raise ContentError(f"不支持公式样式 {math_style!r}；当前只支持 plain")
     if body.count("\\[") != body.count("\\]"):
         raise ContentError("独立公式的 \\[ 与 \\] 分隔符没有成对闭合")
     headings = set(re.findall(r"^##\s+(.+?)\s*$", body, re.MULTILINE))
     missing_sections = [section for section in REQUIRED_SECTIONS if section not in headings]
     if missing_sections:
         raise ContentError(f"缺少章节：{', '.join(missing_sections)}")
+    unknown_accent_headings = [heading for heading in accent_headings if heading not in headings]
+    if unknown_accent_headings:
+        raise ContentError(
+            "accent_headings 中的标题未出现在正文：" + ", ".join(unknown_accent_headings)
+        )
     validate_callouts(body)
     images = validate_images(body, slug)
 

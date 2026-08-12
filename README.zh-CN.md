@@ -8,7 +8,7 @@ littlewei 的公开论文阅读索引。它不追求保存完整摘要，而是�
 
 站点提供铺平卡片、搜索、标签、排序、明暗主题、子窗口/全窗口阅读、桌面和移动目录、深链接、引用复制、Markdown 下载、打印 PDF、公式、五种彩色提示块，以及每篇独立的作品与许可说明。
 
-当前公开分支只保留一篇 littlewei 原创功能示例。项目的软件部分改写自 [lawrence-cj/paper-recap](https://github.com/lawrence-cj/paper-recap)，遵循仓库中的 MIT License；上游笔记和图片没有包含在当前公开分支。笔记内容适用各自元数据中的单独许可，详见 [COPYRIGHT](COPYRIGHT)。
+当前公开分支保留一篇 littlewei 重新整理的真实论文笔记和一篇原创使用指南。项目的软件部分改写自 [lawrence-cj/paper-recap](https://github.com/lawrence-cj/paper-recap)，遵循仓库中的 MIT License；上游笔记和图片没有包含在当前公开分支。笔记内容适用各自元数据中的单独许可，详见 [COPYRIGHT](COPYRIGHT)。
 
 ## 本地预览
 
@@ -84,6 +84,14 @@ python3 -m http.server 8001 --directory dist-public
 
 ## 彩色提示块、公式和图片
 
+章节标题默认使用细分隔线。如果希望某几个标题只显示左侧短色条，在笔记元数据中加入：
+
+```yaml
+accent_headings: ["核心方法", "我的判断"]
+```
+
+列表里的文字必须与正文二级标题完全一致；不需要强调时写 `accent_headings: []` 或省略。
+
 ```markdown
 > [!NOTE]
 > 背景或补充条件。
@@ -101,7 +109,9 @@ python3 -m http.server 8001 --directory dist-public
 > 可能造成错误结论或泄露的边界。
 ```
 
-行内公式使用 `$x_t$`，独立公式使用成对的 `$$`。图片放在 `content/media/<slug>/`，图注必须写明图号、来源和许可：
+行内公式使用 `$x_t$`。独立公式默认使用带浅色底板的成对 `$$`；若想要透明底板，起始行写成 `$$ {.plain}`。两种写法可以在同一篇笔记中混用。
+
+图片放在 `content/media/<slug>/`，图注必须写明图号、来源和许可：
 
 ```markdown
 ![方法总览](media/example-paper/method-overview.webp "论文 Figure 2：方法总览。来源：作者论文，CC BY 4.0。")

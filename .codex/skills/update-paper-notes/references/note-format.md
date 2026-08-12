@@ -22,6 +22,7 @@ Required fields:
 - `note_license`: `All Rights Reserved` by default.
 - `note_source_url`: public GitHub URL of the note once published.
 - `sharing`: `private` while drafting locally; `public` only after explicit publication approval and all checks pass.
+- `accent_headings` (optional): a list of exact H2 labels that should use the short colored bar style, for example `["核心方法", "我的判断"]`.
 
 Quote all string values, keep one `key: value` per line, and avoid multiline metadata.
 
@@ -42,6 +43,7 @@ Avoid an H1 in the body, pasted abstracts, or long chat transcripts.
 ## Mathematics and callouts
 
 - Use `$...$` for inline math and `$$...$$` for display math.
+- Use `$$ {.plain}` as the opening delimiter when a display formula should have no background panel; plain and default blocks may coexist.
 - Keep formulas editable, define symbols nearby, and prefer KaTeX-supported commands.
 - Allowed callouts are `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.
 

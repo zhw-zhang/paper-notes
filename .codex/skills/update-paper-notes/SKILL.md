@@ -19,7 +19,7 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 8. Set new notes to `note_author: "littlewei"`, `note_license: "All Rights Reserved"`, and `sharing: "private"` while drafting locally. Set `note_source_url` to the future public GitHub file URL.
 9. Preserve the user's judgments, disagreements, equations, and only the Q&A that changed understanding. Mark unknowable gaps as `待补充`; never turn inference into fact.
 10. Add figures only when they materially shorten recall. Verify reuse permission from an authoritative source and include figure number, source, and license in every caption. If permission is unclear, link to the original instead of copying the image.
-11. Use GitHub-style callouts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`) for standalone colored passages when useful; do not overuse them.
+11. Use GitHub-style callouts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`) for standalone colored passages when useful; do not overuse them. Use optional `accent_headings` when one or two H2 sections deserve the short colored-bar treatment; every listed label must exactly match a body H2.
 12. Run `python3 .codex/skills/update-paper-notes/scripts/validate_update.py`. Fix every error. Preview locally when layout or formulas changed.
 13. Treat “更新到 Paper Notes” and “发布到 Paper Notes” as explicit authorization to make the scoped note public: complete the publication checks, set `sharing: "public"`, run `python3 scripts/build_site.py --check-public-repo` and `python3 scripts/build_site.py --public`, then commit and push. If the user only asks to draft or add a note, keep it local and do not push until publication is explicit.
 14. Before every push, verify the note contains no private information, every copied figure is licensed for public use, and every tracked note is marked public. Stage only intended files, commit with `content: add <slug>` or `content: update <slug>`, pull with rebase, revalidate, and push.
@@ -30,7 +30,7 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 - Keep `one_liner` specific enough to restore the core mechanism six months later.
 - Keep two to five focused tags and reuse existing spellings.
 - Use concrete result numbers only when supplied or verified.
-- Keep important formulas as editable LaTeX and define symbols nearby.
+- Keep important formulas as editable LaTeX and define symbols nearby. Display formulas use the shaded style by default; use `$$ {.plain}` selectively for a no-background formula.
 - Make `下次只看这些` one to three memory anchors or actions.
 - Do not edit generated `dist/`, `dist-public/`, or `assets/papers.js`.
 - Do not reintroduce upstream Junsong Chen notes or media; the public site contains only littlewei material unless separate written authorization and a deliberate user request say otherwise.

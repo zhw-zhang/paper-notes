@@ -17,44 +17,43 @@
   <body>
     <header class="site-header">
       <a class="brand" href="./" aria-label="Paper Notes 首页">
-        <span class="brand-mark" aria-hidden="true">PN/</span>
+        <span class="brand-mark" aria-hidden="true">PN</span>
         <span>Paper Notes</span>
       </a>
       <div class="header-actions">
-        <span class="owner-label">littlewei · public index</span>
-        <span class="last-updated" id="last-updated"></span>
+        <span class="motto">READ SLOWLY · RECALL QUICKLY</span>
+        <span class="owner-label">littlewei</span>
         <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗主题">◐</button>
       </div>
     </header>
 
     <main>
       <section class="hero" aria-labelledby="page-title">
-        <p class="eyebrow">A WORKING INDEX OF IDEAS</p>
-        <h1 id="page-title">读论文，<br /><em>留下自己的判断。</em></h1>
-        <p class="hero-copy">这里不囤链接。每条记录只保留机制、证据、疑问，以及值得带走的下一步。</p>
-
-        <dl class="stats" aria-label="阅读统计">
-          <div><dt id="stat-papers">0</dt><dd>公开条目</dd></div>
-          <div><dt id="stat-tags">0</dt><dd>索引标签</dd></div>
-          <div><dt id="stat-days">0</dt><dd>阅读日期</dd></div>
-        </dl>
+        <div class="hero-title">
+          <p class="eyebrow">01 / LIBRARY</p>
+          <h1 id="page-title">阅读记录</h1>
+          <p class="hero-copy">慢慢读，迅速想起。只留下机制、证据、疑问与自己的判断。</p>
+        </div>
+        <div class="hero-tools">
+          <label class="search">
+            <span aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="搜索标题、作者、标签或观点…" autocomplete="off" />
+            <kbd>/</kbd>
+          </label>
+          <dl class="stats" aria-label="阅读统计">
+            <div><dt id="stat-papers">0</dt><dd>公开条目</dd></div>
+            <div><dt id="stat-tags">0</dt><dd>索引标签</dd></div>
+            <div><dt id="stat-days">0</dt><dd>阅读日期</dd></div>
+          </dl>
+        </div>
       </section>
 
       <section class="library" aria-labelledby="library-title">
-        <div class="section-heading">
-          <div>
-            <p class="section-index">OPEN NOTEBOOK / INDEX</p>
-            <h2 id="library-title">公开笔记</h2>
-          </div>
-          <label class="search">
-            <span aria-hidden="true">⌕</span>
-            <input id="search-input" type="search" placeholder="搜索题目、标签或判断…" autocomplete="off" />
-            <kbd>/</kbd>
-          </label>
-        </div>
-
         <div class="filters">
-          <div class="tag-list" id="tag-list" aria-label="按标签筛选"></div>
+          <div>
+            <p class="section-index" id="library-title">02 / INDEX</p>
+            <div class="tag-list" id="tag-list" aria-label="按标签筛选"></div>
+          </div>
           <label class="sort-control">排序
             <select id="sort-select">
               <option value="newest">最近阅读</option>
@@ -63,7 +62,10 @@
           </label>
         </div>
 
-        <p class="result-count" id="result-count" aria-live="polite"></p>
+        <div class="library-meta">
+          <p class="result-count" id="result-count" aria-live="polite"></p>
+          <p class="last-updated" id="last-updated"></p>
+        </div>
         <div class="paper-grid" id="paper-grid"></div>
         <div class="empty-state" id="empty-state" hidden>
           <span>∅</span>
@@ -75,10 +77,8 @@
     </main>
 
     <footer>
-      <p>Paper Notes / littlewei / 2026</p>
-      <div class="footer-meta">
-        <p>每篇笔记单独标注来源、许可与分享边界。</p>
-      </div>
+      <p>Paper Notes · littlewei</p>
+      <p>© 2026 littlewei · Notes All Rights Reserved · Code MIT</p>
     </footer>
 
     <dialog id="paper-dialog" aria-labelledby="dialog-title">
