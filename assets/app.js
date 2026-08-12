@@ -1,6 +1,7 @@
 (() => {
   const data = window.PAPER_NOTES_DATA || { generated_at: "", build_mode: "public", papers: [] };
   const state = { query: "", tag: "全部", sort: "newest", activePaper: null };
+  const repositoryUrl = "https://github.com/zhw-zhang/paper-notes";
   let lockedScrollY = 0;
   let toastTimer = null;
 
@@ -17,6 +18,8 @@
     copyLink: document.querySelector("#reader-copy-link"),
     copyCitation: document.querySelector("#reader-copy-citation"),
     downloadMarkdown: document.querySelector("#reader-download-markdown"),
+    editNote: document.querySelector("#reader-edit-note"),
+    newNote: document.querySelector("#new-note-link"),
     print: document.querySelector("#reader-print"),
     desktopToc: document.querySelector("#desktop-toc"),
     mobileToc: document.querySelector("#mobile-toc"),
@@ -207,6 +210,84 @@
       .format(new Date(`${value}T00:00:00`));
   }
 
+  function localTimestamp(date) {
+    const pad = (value) => String(value).padStart(2, "0");
+    const offsetMinutes = -date.getTimezoneOffset();
+    const offsetSign = offsetMinutes >= 0 ? "+" : "-";
+    const offsetHours = pad(Math.floor(Math.abs(offsetMinutes) / 60));
+    const offsetRemainder = pad(Math.abs(offsetMinutes) % 60);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+      + `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+      + `${offsetSign}${offsetHours}:${offsetRemainder}`;
+  }
+
+  function configureNewNoteLink() {
+    if (!elements.newNote) return;
+    const now = new Date();
+    const date = localTimestamp(now).slice(0, 10);
+    const filename = `${date}-new-paper-note.md`;
+    const timestamp = localTimestamp(now);
+    const sourceUrl = `${repositoryUrl}/blob/main/content/papers/${filename}`;
+    const template = `---
+title: "待填写：论文标题"
+paper_url: ""
+authors: "待填写"
+venue: "待填写"
+published: "${now.getFullYear()}"
+read_date: "${date}"
+read_at: "${timestamp}"
+created_at: "${timestamp}"
+updated_at: "${timestamp}"
+status: "待整理"
+tags: ["待分类"]
+one_liner: "待填写：半年后仍值得记住的核心机制。"
+paper_license: "未明确开放许可"
+paper_license_url: ""
+note_author: "littlewei"
+note_license: "All Rights Reserved"
+note_source_url: "${sourceUrl}"
+sharing: "public"
+accent_headings: []
+---
+
+## 研究问题
+
+待填写。
+
+## 核心方法
+
+待填写。
+
+## 关键发现
+
+待填写。
+
+## 我的提问
+
+待填写。
+
+## 局限与疑问
+
+待填写。
+
+## 我的判断
+
+待填写。
+
+## 下次只看这些
+
+1. 待填写。
+`;
+    const parameters = new URLSearchParams({ filename, value: template });
+    elements.newNote.href = `${repositoryUrl}/new/main/content/papers?${parameters.toString()}`;
+  }
+
+  function githubEditUrl(sourcePath) {
+    if (!sourcePath || !sourcePath.startsWith("content/papers/")) return "";
+    const encodedPath = sourcePath.split("/").map((part) => encodeURIComponent(part)).join("/");
+    return `${repositoryUrl}/edit/main/${encodedPath}`;
+  }
+
   function citationFor(paper) {
     const publication = [paper.venue, paper.published].filter(Boolean).join(", ");
     return `${paper.authors}. “${paper.title}.”${publication ? ` ${publication}.` : ""}${paper.paper_url ? ` ${paper.paper_url}` : ""}`;
@@ -363,6 +444,9 @@
     elements.mobileTocBody.innerHTML = toc;
     elements.downloadMarkdown.href = `notes/${encodeURIComponent(paper.source_file)}`;
     elements.downloadMarkdown.download = paper.source_file;
+    const editUrl = githubEditUrl(paper.source_path);
+    elements.editNote.hidden = !editUrl;
+    elements.editNote.href = editUrl || "#";
     renderMath(elements.dialogContent);
     if (!elements.dialog.open) elements.dialog.showModal();
     elements.dialog.scrollTop = 0;
@@ -464,5 +548,5 @@
   });
   addEventListener("popstate", openFromHash);
 
-  initTheme(); initStats(); renderTags(); renderPapers(); openFromHash();
+  initTheme(); configureNewNoteLink(); initStats(); renderTags(); renderPapers(); openFromHash();
 })();

@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T22:55:00+08:00"
 created_at: "2026-08-12T22:55:00+08:00"
-updated_at: "2026-08-12T23:30:00+08:00"
+updated_at: "2026-08-13T01:27:54+08:00"
 status: "使用指南"
 tags: ["Tutorial", "Markdown", "Workflow"]
 one_liner: "这是一篇可以边看边抄的样式手册：用同一页学习新建、标签、短色条标题、五种提示块、两种公式、分享链接、Markdown 与 PDF。"
@@ -31,6 +31,19 @@ Paper Notes 的目标不是把论文全文搬进来，而是让未来的自己�
 最简单的方式是直接对 Codex 说：`使用 $update-paper-notes，把这篇论文和我的理解发布到 Paper Notes。` 技能会核对论文、去重、补齐许可、生成 Markdown、校验并推送。
 
 如果只想先写草稿，要明确说“先起草，不发布”。草稿会放在被 Git 忽略的 `content/private/`，不会出现在公开 Pages 构建中。
+
+### 直接在网页新建或修改
+
+公开网站页眉有一个低调的“管理”菜单：
+
+- “新建公开笔记”会打开 GitHub 文件编辑器，并自动填好当前日期、时间、许可字段和七个固定章节。
+- “管理公开笔记”用于浏览 `content/papers/` 中的全部公开 Markdown。
+- “打开完整网页编辑器”会进入 `github.dev`，适合连续修改多篇笔记。
+
+打开任意笔记后，顶部工具栏的“在线编辑”会精确跳转到当前 Markdown。修改完成后在 GitHub 点击提交，推送到 `main` 后 Pages 会自动校验和发布，不需要本地构建或命令行。
+
+> [!WARNING]
+> 网页入口只能创建公开笔记。网站不保存 GitHub Token，GitHub 会检查账号权限；普通访客即使看到编辑入口，也不能直接修改正式仓库。私人、公司内部或未公开内容仍然只能放在未提交的本地草稿中。
 
 ### 创建第一篇笔记：推荐方式
 
@@ -203,7 +216,7 @@ $$
 
 ## 下次只看这些
 
-1. 新建内容优先使用 `$update-paper-notes`；手工草稿从 `content/TEMPLATE.md` 复制到 `content/private/`。
+1. 公开内容可以从页眉“管理”直接在 GitHub 网页端新建；需要核对论文或保留私人草稿时优先使用 `$update-paper-notes`。
 2. 用 `scripts/manage_visibility.py` 逐篇、按 tag 或整体切换可见性；按钮只改本地，推送后网页才更新。
 3. `status` 和 `read_date` 控制卡片顶部，`created_at` 与 `updated_at` 支持创建/编辑时间排序。
 4. 用 `accent_headings` 选择短色条标题，用五种 callout 表达不同强度的信息。

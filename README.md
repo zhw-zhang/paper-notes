@@ -10,6 +10,12 @@ The site includes a flat card index, search, tags, reading/edited/created-time s
 
 The current public branch contains one independently rewritten paper recap and one original usage guide by littlewei, with no upstream notes or media. Software portions were adapted from [lawrence-cj/paper-recap](https://github.com/lawrence-cj/paper-recap) under the included MIT License. Note content has its own per-file license; see [COPYRIGHT](COPYRIGHT).
 
+## Edit in the browser
+
+The public site has an author menu for creating and managing public notes without a local checkout. “New public note” opens a prefilled, validation-compatible Markdown template in GitHub; each reader toolbar has an “Edit online” link to the exact source file; the full workspace opens in `github.dev`.
+
+Commit approved changes to `main` and Pages will validate and redeploy automatically. The site stores no GitHub token: GitHub login and repository permissions control every write. The web workflow is public-only; never create or commit a sensitive draft from it.
+
 ## Local preview
 
 ```bash

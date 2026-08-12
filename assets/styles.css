@@ -113,6 +113,16 @@ a { color: inherit; }
 .header-actions { display: flex; gap: 22px; align-items: center; color: var(--muted); font-family: var(--mono); font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; }
 .motto { color: var(--accent); font-weight: 800; }
 .owner-label { padding-left: 22px; border-left: 1px solid var(--line); }
+.author-menu { position: relative; }
+.author-menu summary { padding: 5px 9px; border: 1px solid transparent; border-radius: 4px; color: var(--muted); cursor: pointer; list-style: none; }
+.author-menu summary::-webkit-details-marker { display: none; }
+.author-menu summary::after { margin-left: 5px; font-size: 0.58rem; content: "⌄"; }
+.author-menu[open] summary, .author-menu summary:hover { color: var(--ink); border-color: var(--line); background: var(--surface); }
+.author-menu-panel { z-index: 30; width: 250px; padding: 14px; position: absolute; top: calc(100% + 11px); right: 0; border: 1px solid var(--line); color: var(--ink); background: var(--surface); box-shadow: var(--shadow); font-family: var(--sans); letter-spacing: 0; text-transform: none; }
+.author-menu-title { margin: 0 0 8px; color: var(--accent); font-family: var(--mono); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.14em; }
+.author-menu-panel a { padding: 9px 8px; display: block; border-top: 1px solid var(--soft-line); color: var(--ink); font-size: 0.76rem; font-weight: 650; text-decoration: none; }
+.author-menu-panel a:hover { color: var(--accent); background: var(--soft-panel); }
+.author-menu-note { margin: 10px 8px 2px; color: var(--muted); font-size: 0.65rem; line-height: 1.55; }
 .icon-button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: var(--surface); }
 .icon-button:hover { transform: rotate(16deg); border-color: var(--accent); }
 
@@ -261,6 +271,8 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
   .site-header { min-height: 66px; }
   .brand { font-size: 0.82rem; }
   .owner-label { display: none; }
+  .header-actions { gap: 9px; }
+  .author-menu-panel { position: fixed; top: 58px; right: 16px; }
   .hero { padding-top: 46px; }
   .hero h1 { font-size: 3.15rem; }
   .hero-copy { font-size: 0.95rem; }
