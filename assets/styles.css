@@ -11,6 +11,8 @@
   --grid: rgba(96, 70, 215, 0.024);
   --accent: #6553cb;
   --accent-2: #d9fa62;
+  --selection: #4a352d;
+  --selection-ink: #fff9f0;
   --hot: #e26349;
   --shadow: 0 24px 70px rgba(63, 55, 42, 0.16);
   --serif: "Iowan Old Style", "Songti SC", STSong, "Noto Serif CJK SC", Georgia, serif;
@@ -42,6 +44,8 @@
   --grid: rgba(168, 149, 255, 0.055);
   --accent: #a895ff;
   --accent-2: #c9f25b;
+  --selection: #c9f25b;
+  --selection-ink: #172033;
   --hot: #ff8063;
   --shadow: 0 26px 80px rgba(0, 0, 0, 0.48);
   --note-bg: #1d2944;
@@ -105,7 +109,7 @@ a { color: inherit; }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: inline-flex; gap: 12px; align-items: center; font-size: 0.92rem; font-weight: 750; letter-spacing: 0.01em; text-decoration: none; }
-.brand-mark { padding: 3px 8px; color: #172033; background: var(--accent-2); font-family: var(--mono); font-size: 0.72rem; font-weight: 900; }
+.brand-mark { padding: 3px 8px; color: var(--selection-ink); background: var(--selection); font-family: var(--mono); font-size: 0.72rem; font-weight: 900; }
 .header-actions { display: flex; gap: 22px; align-items: center; color: var(--muted); font-family: var(--mono); font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; }
 .motto { color: var(--accent); font-weight: 800; }
 .owner-label { padding-left: 22px; border-left: 1px solid var(--line); }
@@ -145,7 +149,7 @@ main { width: min(1480px, calc(100% - 64px)); margin: 0 auto; }
 .filters { display: flex; gap: 26px; align-items: flex-end; justify-content: space-between; }
 .tag-list { margin-top: 18px; display: flex; gap: 9px; flex-wrap: wrap; }
 .tag-button { padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: color-mix(in srgb, var(--surface) 70%, transparent); font-size: 0.75rem; }
-.tag-button:hover, .tag-button.active { color: #172033; border-color: var(--accent-2); background: var(--accent-2); }
+.tag-button:hover, .tag-button.active { color: var(--selection-ink); border-color: var(--selection); background: var(--selection); }
 .sort-control { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 0.73rem; white-space: nowrap; }
 .sort-control select { border: 0; outline: 0; color: var(--ink); background: transparent; font-weight: 750; }
 .library-meta { margin: 32px 0 12px; padding-top: 13px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); }
