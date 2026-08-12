@@ -6,6 +6,8 @@ venue: "Paper Notes"
 published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T22:55:00+08:00"
+created_at: "2026-08-12T22:55:00+08:00"
+updated_at: "2026-08-12T23:30:00+08:00"
 status: "使用指南"
 tags: ["Tutorial", "Markdown", "Workflow"]
 one_liner: "这是一篇可以边看边抄的样式手册：用同一页学习新建、标签、短色条标题、五种提示块、两种公式、分享链接、Markdown 与 PDF。"
@@ -20,7 +22,7 @@ accent_headings: ["核心方法", "关键发现"]
 
 ## 研究问题
 
-Paper Notes 的目标不是把论文全文搬进来，而是让未来的自己快速恢复上下文。这篇指南把站点目前支持的主要写法放在同一页中；首页卡片、标签、子窗口、全窗口、目录和底部许可行也都能直接用本页测试。
+Paper Notes 的目标不是把论文全文搬进来，而是让未来的自己快速恢复上下文。这篇指南把站点目前支持的主要写法和完整工作流放在同一页中；你可以用它学习创建第一篇笔记、修改卡片信息、设置可见性、上传发布，以及测试首页卡片、标签、子窗口、全窗口、目录和底部许可行。
 
 普通二级标题会使用一条细分隔线。被列入元数据 `accent_headings` 的标题，则会变成只有左侧短色条的强调样式。
 
@@ -28,9 +30,95 @@ Paper Notes 的目标不是把论文全文搬进来，而是让未来的自己�
 
 最简单的方式是直接对 Codex 说：`使用 $update-paper-notes，把这篇论文和我的理解发布到 Paper Notes。` 技能会核对论文、去重、补齐许可、生成 Markdown、校验并推送。
 
-如果只想先写草稿，要明确说“先起草，不发布”。这个仓库本身是公开的，所以 private 草稿不能提交或推送。
+如果只想先写草稿，要明确说“先起草，不发布”。草稿会放在被 Git 忽略的 `content/private/`，不会出现在公开 Pages 构建中。
 
-手工写作时，可以复制 `content/TEMPLATE.md`，修改开头的书目信息、标签、one-liner 和分享状态，然后完成七个固定章节。
+### 创建第一篇笔记：推荐方式
+
+准备论文链接和哪怕很零散的理解，然后直接对 Codex 说：
+
+```text
+使用 $update-paper-notes，先为这篇论文创建一篇仅本地草稿，不发布：
+
+论文：https://arxiv.org/abs/xxxx.xxxxx
+我的理解：……
+重要问答：……
+我的判断：……
+```
+
+Codex 会创建 Markdown、核对论文与许可并运行校验。你确认内容以后，再说：`把这篇笔记设为公开并上传到 Paper Notes。`
+
+### 创建第一篇笔记：手工方式
+
+在仓库目录运行：
+
+```bash
+mkdir -p content/private
+cp content/TEMPLATE.md content/private/2026-08-12-my-first-paper.md
+```
+
+文件名使用“阅读日期 + 简短英文 slug”。打开新文件后，至少修改标题、论文链接、作者、标签、one-liner、许可和正文七个章节。
+
+卡片左上角的文字来自 `status`，右上角日期来自 `read_date`，都可以逐篇修改。例如：
+
+```yaml
+read_date: "2026-08-12"
+read_at: "2026-08-12T21:30:00+08:00"
+created_at: "2026-08-12T21:30:00+08:00"
+updated_at: "2026-08-12T22:10:00+08:00"
+status: "已精读"
+```
+
+`created_at` 用于“最新创建”排序，`updated_at` 用于“最近编辑”排序；修改正文时同步更新 `updated_at`。`status` 可以写“待读”“略读”“已读”“已精读”“复现中”或自己的短标签。
+
+### 本地预览
+
+```bash
+python3 scripts/build_site.py
+python3 -m http.server 8000 --directory dist
+```
+
+浏览器打开 `http://localhost:8000`。本地完整构建会同时显示公开笔记和 `content/private/` 中的草稿。
+
+### 设置单篇、标签或全部可见性
+
+```bash
+python3 scripts/manage_visibility.py
+```
+
+命令会打开仅供本机使用的管理页。你可以：
+
+- 对一篇笔记点击“公开”或“仅本地”。
+- 对同一个 tag 点击“全公开”或“全隐藏”。
+- 点击“全部公开”或“全部仅本地”。
+
+管理页会同时修改 `sharing` 和文件位置：公开内容放在 `content/papers/`，仅本地内容放在被 Git 忽略的 `content/private/`。这些按钮只修改电脑上的文件，不会自行上传。
+
+> [!CAUTION]
+> 已经推送到公开 GitHub 的内容可能仍留在 Git 历史中。真正敏感的笔记必须从一开始就放在 `content/private/`，不要提交或推送。
+
+### 上传公开笔记
+
+最简单的方式是告诉 Codex：`把已经设为公开的笔记检查后上传到 Paper Notes。` 它会执行公开边界检查、构建、提交、推送并等待 Pages 完成。
+
+手工上传前先运行：
+
+```bash
+python3 scripts/build_site.py --check-public-repo
+python3 scripts/build_site.py --public
+```
+
+确认无误后，只提交 `content/papers/` 中准备公开的笔记和相关改动，再推送到 `main`。把示例文件名换成自己的：
+
+```bash
+git add content/papers/2026-08-12-my-first-paper.md
+git commit -m "content: add my-first-paper"
+git pull --rebase origin main
+git push origin main
+```
+
+如果笔记包含已确认许可的图片，也要明确加入对应的 `content/media/<slug>/`。`content/private/` 已被 Git 忽略，不应进入提交。推送完成后，GitHub Pages 会自动构建公开网站。
+
+无论用哪种方式，正文都应完成七个固定章节。
 
 > [!IMPORTANT]
 > one-liner 应该在半年后仍能独立恢复论文的核心机制，而不是重复论文标题。
@@ -90,10 +178,19 @@ $$
 
 快速浏览时保留居中子窗口；长文阅读、使用右侧目录或打印前检查版式时，切换到全窗口更舒服。移动端则使用可展开目录。
 
+### Q4：设为“仅本地”后，网页会立刻消失吗？
+
+不会。本地管理页只改电脑上的文件；需要再次提交并推送，Pages 才会更新。如果文章曾经公开过，当前网页可以移除，但旧版本仍可能留在 Git 历史中。
+
+### Q5：首页卡片上方的状态和日期能改吗？
+
+可以。左侧读取 `status`，右侧读取 `read_date`。它们是每篇 Markdown 开头的元数据，不同笔记可以各自设置；位置属于统一卡片版式，若想整体换位置则修改站点模板。
+
 ## 局限与疑问
 
 - 站点不会替你获得转载授权；公开可访问不等于允许复制论文正文或图片。
-- `sharing: "private"` 只影响 Pages 构建，不能让已经提交到公开 GitHub 仓库的文件变私密。
+- `sharing` 与文件目录必须匹配：`content/papers/` 使用 `public`，`content/private/` 使用 `private`。
+- 将已经公开的文章改为仅本地，不能抹去 Git 历史里的旧版本。
 - 公式通过 KaTeX 渲染，本地预览公式时需要联网加载样式文件。
 - 当前 Markdown 渲染器有意保持轻量，复杂表格或自定义 HTML 应先在本地检查。
 
@@ -106,6 +203,8 @@ $$
 
 ## 下次只看这些
 
-1. 新建内容优先使用 `$update-paper-notes`；手工写时从 `content/TEMPLATE.md` 开始。
-2. 用 `accent_headings` 选择短色条标题，用五种 callout 表达不同强度的信息。
-3. 独立公式默认有底板，`$$ {.plain}` 使用透明底；发布前始终检查来源、许可和隐私。
+1. 新建内容优先使用 `$update-paper-notes`；手工草稿从 `content/TEMPLATE.md` 复制到 `content/private/`。
+2. 用 `scripts/manage_visibility.py` 逐篇、按 tag 或整体切换可见性；按钮只改本地，推送后网页才更新。
+3. `status` 和 `read_date` 控制卡片顶部，`created_at` 与 `updated_at` 支持创建/编辑时间排序。
+4. 用 `accent_headings` 选择短色条标题，用五种 callout 表达不同强度的信息。
+5. 独立公式默认有底板，`$$ {.plain}` 使用透明底；发布前始终检查来源、许可和隐私。

@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT_DIR = ROOT / "content" / "papers"
+PRIVATE_CONTENT_DIR = ROOT / "content" / "private"
 MEDIA_DIR = ROOT / "content" / "media"
 DIST_DIR = ROOT / "dist"
 PUBLIC_DIST_DIR = ROOT / "dist-public"
@@ -25,7 +27,8 @@ IMAGE_PATTERN = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 REQUIRED_FIELDS = {
-    "title", "paper_url", "authors", "venue", "published", "read_date",
+    "title", "paper_url", "authors", "venue", "published", "read_date", "read_at",
+    "created_at", "updated_at",
     "status", "tags", "one_liner", "paper_license", "paper_license_url",
     "note_author", "note_license", "note_source_url", "sharing",
 }
@@ -141,15 +144,19 @@ def parse_note(path: Path) -> dict:
         datetime.strptime(str(metadata["read_date"]), "%Y-%m-%d")
     except ValueError as exc:
         raise ContentError("read_date 必须使用 YYYY-MM-DD") from exc
-    if metadata.get("read_at"):
+    timestamps = {}
+    for field in ("read_at", "created_at", "updated_at"):
         try:
-            read_at = datetime.fromisoformat(str(metadata["read_at"]).replace("Z", "+00:00"))
+            timestamp = datetime.fromisoformat(str(metadata[field]).replace("Z", "+00:00"))
         except ValueError as exc:
-            raise ContentError("read_at 必须使用带时区的 ISO 8601 时间") from exc
-        if read_at.tzinfo is None:
-            raise ContentError("read_at 必须包含时区，例如 +08:00")
-        if read_at.date().isoformat() != str(metadata["read_date"]):
-            raise ContentError("read_at 的本地日期必须与 read_date 一致")
+            raise ContentError(f"{field} 必须使用带时区的 ISO 8601 时间") from exc
+        if timestamp.tzinfo is None:
+            raise ContentError(f"{field} 必须包含时区，例如 +08:00")
+        timestamps[field] = timestamp
+    if timestamps["read_at"].date().isoformat() != str(metadata["read_date"]):
+        raise ContentError("read_at 的本地日期必须与 read_date 一致")
+    if timestamps["updated_at"] < timestamps["created_at"]:
+        raise ContentError("updated_at 不能早于 created_at")
     if not str(metadata["title"]).strip() or not str(metadata["one_liner"]).strip():
         raise ContentError("title 和 one_liner 不能为空")
     for field in ("paper_license", "note_author", "note_license"):
@@ -160,6 +167,10 @@ def parse_note(path: Path) -> dict:
     validate_url(str(metadata["note_source_url"]), "note_source_url")
     if metadata["sharing"] not in ALLOWED_SHARING:
         raise ContentError("sharing 只能是 private 或 public")
+    expected_sharing = "private" if path.parent == PRIVATE_CONTENT_DIR else "public"
+    if metadata["sharing"] != expected_sharing:
+        expected_dir = "content/private" if expected_sharing == "private" else "content/papers"
+        raise ContentError(f"位于 {expected_dir} 的笔记必须设置 sharing: \"{expected_sharing}\"")
     if metadata["sharing"] == "public" and metadata["note_author"] != "littlewei":
         if metadata.get("publication_permission") != "confirmed":
             raise ContentError(
@@ -168,6 +179,8 @@ def parse_note(path: Path) -> dict:
 
     slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
     body = match.group(2).strip()
+    if body.count("```") % 2:
+        raise ContentError("代码块的 ``` 分隔符没有成对闭合")
     if body.count("$$") % 2:
         raise ContentError("独立公式的 $$ 分隔符没有成对闭合")
     for math_style in re.findall(r"^\$\$\s+\{\.([^}]+)\}\s*$", body, re.MULTILINE):
@@ -190,13 +203,17 @@ def parse_note(path: Path) -> dict:
     metadata["slug"] = slug
     metadata["body"] = body
     metadata["source_file"] = path.name
+    metadata["source_path"] = str(path.relative_to(ROOT))
     metadata["media"] = images
     return metadata
 
 
-def load_papers() -> list[dict]:
+def load_papers(*, include_private: bool = True) -> list[dict]:
     papers, errors, seen_slugs = [], [], set()
-    for path in sorted(CONTENT_DIR.glob("*.md")):
+    paths = list(CONTENT_DIR.glob("*.md"))
+    if include_private and PRIVATE_CONTENT_DIR.exists():
+        paths.extend(PRIVATE_CONTENT_DIR.glob("*.md"))
+    for path in sorted(paths):
         try:
             paper = parse_note(path)
             if paper["slug"] in seen_slugs:
@@ -208,7 +225,8 @@ def load_papers() -> list[dict]:
     if errors:
         raise ContentError("\n".join(errors))
     if not papers:
-        raise ContentError("content/papers 中没有阅读记录")
+        scope = "content/papers 或 content/private" if include_private else "content/papers"
+        raise ContentError(f"{scope} 中没有阅读记录")
     return sorted(
         papers,
         key=lambda item: (item["read_date"], item.get("read_at", ""), item["title"]),
@@ -259,7 +277,7 @@ def build(papers: list[dict], *, public: bool = False) -> Path:
     for filename in ("styles.css", "app.js"):
         shutil.copy2(ROOT / "assets" / filename, output_dir / "assets" / filename)
     for paper in papers:
-        shutil.copy2(CONTENT_DIR / paper["source_file"], output_dir / "notes" / paper["source_file"])
+        shutil.copy2(ROOT / paper["source_path"], output_dir / "notes" / paper["source_file"])
     if public:
         copy_selected_media(papers, output_dir)
     elif MEDIA_DIR.exists():
@@ -281,16 +299,22 @@ def main() -> int:
     )
     args = parser.parse_args()
     try:
-        all_papers = load_papers()
         if args.check_public_repo:
-            private_files = [paper["source_file"] for paper in all_papers if paper["sharing"] != "public"]
-            if private_files:
+            tracked_private = subprocess.run(
+                ["git", "ls-files", "--", "content/private"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+            if tracked_private:
                 raise ContentError(
-                    "公开仓库不能提交 private 笔记：" + ", ".join(private_files)
+                    "公开仓库不能跟踪 content/private 中的文件：" + ", ".join(tracked_private)
                 )
-            print(f"公开仓库校验通过：{len(all_papers)} 篇记录均可公开")
+            public_papers = load_papers(include_private=False)
+            print(f"公开仓库校验通过：content/papers 中 {len(public_papers)} 篇记录均可公开")
             return 0
-        papers = [paper for paper in all_papers if paper["sharing"] == "public"] if args.public else all_papers
+        papers = load_papers(include_private=not args.public)
         if not args.check:
             output_dir = build(papers, public=args.public)
     except ContentError as exc:

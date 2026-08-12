@@ -1,10 +1,10 @@
 # Paper Notes format
 
-Use UTF-8 Markdown and copy `content/TEMPLATE.md` for a new entry.
+Use UTF-8 Markdown and copy `content/TEMPLATE.md` into `content/private/` for a new draft.
 
 ## Public repository boundary
 
-This GitHub repository is public. `sharing: "private"` only keeps a local draft out of the Pages build; it does not make a committed file private. Never stage, commit, or push a private draft. Before publishing, run `python3 scripts/build_site.py --check-public-repo`.
+This GitHub repository is public. Keep drafts in the gitignored `content/private/` directory with `sharing: "private"`. Published notes live in `content/papers/` with `sharing: "public"`. Use `python3 scripts/manage_visibility.py` to move notes safely between them. Never stage, commit, or push a private draft. Before publishing, run `python3 scripts/build_site.py --check-public-repo`.
 
 ## Frontmatter
 
@@ -13,6 +13,8 @@ Required fields:
 - `title`, `paper_url`, `authors`, `venue`, `published`: canonical bibliographic information.
 - `read_date`: `YYYY-MM-DD` local date.
 - `read_at`: timezone-aware ISO 8601 time for every new note.
+- `created_at`: timezone-aware ISO 8601 creation time; preserve it when revising.
+- `updated_at`: timezone-aware ISO 8601 last-edit time; refresh it whenever content changes.
 - `status`: normally `待读`, `略读`, `已读`, `已精读`, or `复现中`.
 - `tags`: two to five stable quoted tags.
 - `one_liner`: a specific standalone memory-restoring sentence.
@@ -21,7 +23,7 @@ Required fields:
 - `note_author`: `littlewei` for new notes.
 - `note_license`: `All Rights Reserved` by default.
 - `note_source_url`: public GitHub URL of the note once published.
-- `sharing`: `private` while drafting locally; `public` only after explicit publication approval and all checks pass.
+- `sharing`: `private` in `content/private/`; `public` in `content/papers/` only after explicit publication approval and all checks pass.
 - `accent_headings` (optional): a list of exact H2 labels that should use the short colored bar style, for example `["核心方法", "我的判断"]`.
 
 Quote all string values, keep one `key: value` per line, and avoid multiline metadata.

@@ -73,12 +73,31 @@
     let listType = null;
     let displayMath = null;
     let displayMathStyle = "";
+    let codeBlock = null;
+    let codeLanguage = "";
     let headingIndex = 0;
     const closeList = () => { if (listType) output.push(`</${listType}>`); listType = null; };
 
     for (let index = 0; index < lines.length; index += 1) {
       const raw = lines[index];
       const line = raw.trim();
+      if (codeBlock !== null) {
+        if (line === "```") {
+          const languageClass = codeLanguage ? ` class="language-${escapeHtml(codeLanguage)}"` : "";
+          output.push(`<pre class="code-block"><code${languageClass}>${escapeHtml(codeBlock.join("\n"))}</code></pre>`);
+          codeBlock = null;
+          codeLanguage = "";
+        } else {
+          codeBlock.push(raw);
+        }
+        continue;
+      }
+      if (line.startsWith("```")) {
+        closeList();
+        codeBlock = [];
+        codeLanguage = line.slice(3).trim().replace(/[^a-z0-9_-]/gi, "");
+        continue;
+      }
       if (displayMath !== null) {
         displayMath.push(raw);
         if (line.endsWith("$$")) {
@@ -159,6 +178,7 @@
       if (line.startsWith("> ")) output.push(`<blockquote>${inlineMarkdown(line.slice(2))}</blockquote>`);
       else output.push(`<p>${inlineMarkdown(line)}</p>`);
     }
+    if (codeBlock !== null) output.push(`<pre class="math-error">${escapeHtml(codeBlock.join("\n"))}</pre>`);
     if (displayMath !== null) output.push(`<pre class="math-error">${escapeHtml(displayMath.join("\n"))}</pre>`);
     closeList();
     return { html: output.join(""), toc };
@@ -256,6 +276,14 @@
     });
     return filtered.sort((a, b) => {
       if (state.sort === "title") return a.title.localeCompare(b.title);
+      if (state.sort === "updated") {
+        return (b.updated_at || b.read_at || "").localeCompare(a.updated_at || a.read_at || "")
+          || a.title.localeCompare(b.title);
+      }
+      if (state.sort === "created") {
+        return (b.created_at || b.read_at || "").localeCompare(a.created_at || a.read_at || "")
+          || a.title.localeCompare(b.title);
+      }
       return b.read_date.localeCompare(a.read_date)
         || (b.read_at || "").localeCompare(a.read_at || "")
         || a.title.localeCompare(b.title);

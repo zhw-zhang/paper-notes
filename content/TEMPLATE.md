@@ -1,4 +1,4 @@
-<!-- 这是公开仓库：private 草稿可以本地保存，但绝对不要提交或推送。 -->
+<!-- 把 private 草稿放在被 Git 忽略的 content/private/；绝对不要提交或推送敏感内容。 -->
 ---
 title: "论文完整标题"
 paper_url: "https://arxiv.org/abs/..."
@@ -7,6 +7,8 @@ venue: "会议 / 期刊 / arXiv"
 published: "2026"
 read_date: "YYYY-MM-DD"
 read_at: "YYYY-MM-DDTHH:MM:SS+08:00"
+created_at: "YYYY-MM-DDTHH:MM:SS+08:00"
+updated_at: "YYYY-MM-DDTHH:MM:SS+08:00"
 status: "已精读"
 tags: ["主题一", "主题二"]
 one_liner: "如果半年后只能记住一句话，就是这一句。"
@@ -86,6 +88,6 @@ $$
 公开分享前：
 1. 从论文或出版方官方页面确认 paper_license 和 paper_license_url；不确定时保留“未明确开放许可”。
 2. 逐张图片确认图注含来源与许可；许可不明确时不要复制图片。
-3. 把 sharing 从 private 改为 public。
-4. 运行 `python3 scripts/build_site.py --check-public-repo`；不要把 private 草稿提交到公开仓库。
+3. 运行 `python3 scripts/manage_visibility.py`，将本篇切换为公开；管理器会把文件移到 content/papers/ 并同步 sharing。
+4. 运行 `python3 scripts/build_site.py --check-public-repo`；不要把 content/private/ 中的草稿提交到公开仓库。
 -->

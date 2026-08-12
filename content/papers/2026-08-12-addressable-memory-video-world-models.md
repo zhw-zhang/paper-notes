@@ -6,6 +6,8 @@ venue: "arXiv"
 published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T22:20:00+08:00"
+created_at: "2026-08-12T22:20:00+08:00"
+updated_at: "2026-08-12T22:20:00+08:00"
 status: "已整理"
 tags: ["Video Generation", "World Models", "KV Cache"]
 one_liner: "WorldTrace 先解决记忆能否被找到，再解决应该记住什么：把压缩后的 Key 放回训练分布内的虚拟位置，并用 Field 与 Landmark 两种写入器分别维护连续性和事件回忆。"

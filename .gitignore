@@ -1,5 +1,6 @@
 dist/
 dist-public/
 tmp/
+content/private/
 .DS_Store
 __pycache__/

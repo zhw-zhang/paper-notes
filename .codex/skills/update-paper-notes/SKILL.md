@@ -15,13 +15,13 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 4. Identify the referenced paper from the supplied title, URL, PDF, or context. Verify identity, authors, venue, year, canonical URL, and paper license from authoritative sources. Never infer an open license from free availability. Use `未明确开放许可` with an empty `paper_license_url` when no authoritative license is found.
 5. Read `references/note-format.md` before creating or substantially restructuring an entry.
 6. Deduplicate by normalized title, canonical URL, DOI, arXiv ID, authors, and slug. Merge matching material into the existing note instead of creating a duplicate. Stop and ask only when paper identity remains genuinely ambiguous.
-7. Create or edit exactly one Markdown note in `content/papers/`. Name new files `YYYY-MM-DD-short-kebab-slug.md`; set a timezone-aware `read_at`. Preserve an existing note's original `read_at` unless the user records a new reading session.
-8. Set new notes to `note_author: "littlewei"`, `note_license: "All Rights Reserved"`, and `sharing: "private"` while drafting locally. Set `note_source_url` to the future public GitHub file URL.
+7. Create a private draft in the gitignored `content/private/` directory, or edit an existing note in its current directory. Name new files `YYYY-MM-DD-short-kebab-slug.md`; set timezone-aware `read_at`, `created_at`, and `updated_at`. Preserve `created_at` and an existing `read_at` unless the user records a new reading session; refresh `updated_at` whenever the note changes.
+8. Set new drafts to `note_author: "littlewei"`, `note_license: "All Rights Reserved"`, and `sharing: "private"`. Set `note_source_url` to the future public GitHub file URL. When publication is approved, use `python3 scripts/manage_visibility.py` or equivalently move the note to `content/papers/` while setting `sharing: "public"`.
 9. Preserve the user's judgments, disagreements, equations, and only the Q&A that changed understanding. Mark unknowable gaps as `待补充`; never turn inference into fact.
 10. Add figures only when they materially shorten recall. Verify reuse permission from an authoritative source and include figure number, source, and license in every caption. If permission is unclear, link to the original instead of copying the image.
 11. Use GitHub-style callouts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`) for standalone colored passages when useful; do not overuse them. Use optional `accent_headings` when one or two H2 sections deserve the short colored-bar treatment; every listed label must exactly match a body H2.
 12. Run `python3 .codex/skills/update-paper-notes/scripts/validate_update.py`. Fix every error. Preview locally when layout or formulas changed.
-13. Treat “更新到 Paper Notes” and “发布到 Paper Notes” as explicit authorization to make the scoped note public: complete the publication checks, set `sharing: "public"`, run `python3 scripts/build_site.py --check-public-repo` and `python3 scripts/build_site.py --public`, then commit and push. If the user only asks to draft or add a note, keep it local and do not push until publication is explicit.
+13. Treat “更新到 Paper Notes” and “发布到 Paper Notes” as explicit authorization to make the scoped note public: complete the publication checks, move it from `content/private/` to `content/papers/`, set `sharing: "public"`, run `python3 scripts/build_site.py --check-public-repo` and `python3 scripts/build_site.py --public`, then commit and push. If the user only asks to draft or add a note, keep it in `content/private/` and do not push until publication is explicit.
 14. Before every push, verify the note contains no private information, every copied figure is licensed for public use, and every tracked note is marked public. Stage only intended files, commit with `content: add <slug>` or `content: update <slug>`, pull with rebase, revalidate, and push.
 15. GitHub Pages deploys `dist-public` automatically after a successful push to `main`. Never deploy `dist/`. If a push loses a concurrent race, pull with rebase and retry once; stop on content conflicts.
 
@@ -33,6 +33,7 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 - Keep important formulas as editable LaTeX and define symbols nearby. Display formulas use the shaded style by default; use `$$ {.plain}` selectively for a no-background formula.
 - Make `下次只看这些` one to three memory anchors or actions.
 - Do not edit generated `dist/`, `dist-public/`, or `assets/papers.js`.
+- Keep the status label short; it and `read_date` appear at the top of each card. The site can sort by `read_at`, `updated_at`, or `created_at`.
 - Do not reintroduce upstream Junsong Chen notes or media; the public site contains only littlewei material unless separate written authorization and a deliberate user request say otherwise.
 
 ## User-facing intake
