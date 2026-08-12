@@ -9,7 +9,7 @@ read_at: "2026-08-12T22:55:00+08:00"
 created_at: "2026-08-12T22:55:00+08:00"
 updated_at: "2026-08-13T01:27:54+08:00"
 status: "使用指南"
-tags: ["Tutorial", "Markdown", "Workflow"]
+tags: ["Tutorial",]
 one_liner: "这是一篇可以边看边抄的样式手册：用同一页学习新建、标签、短色条标题、五种提示块、两种公式、分享链接、Markdown 与 PDF。"
 paper_license: "不适用（原创教程）"
 paper_license_url: ""
