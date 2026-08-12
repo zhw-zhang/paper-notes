@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Paper Notes"
+  short_description: "Turn reading notes into a public paper index"
+  default_prompt: "Use $update-paper-notes to prepare this paper note and publish it to my public Paper Notes site."

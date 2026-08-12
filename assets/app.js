@@ -1,0 +1,443 @@
+(() => {
+  const data = window.PAPER_NOTES_DATA || { generated_at: "", build_mode: "public", papers: [] };
+  const state = { query: "", tag: "全部", sort: "newest", activePaper: null };
+  let lockedScrollY = 0;
+  let toastTimer = null;
+
+  const elements = {
+    grid: document.querySelector("#paper-grid"),
+    tags: document.querySelector("#tag-list"),
+    search: document.querySelector("#search-input"),
+    sort: document.querySelector("#sort-select"),
+    count: document.querySelector("#result-count"),
+    empty: document.querySelector("#empty-state"),
+    dialog: document.querySelector("#paper-dialog"),
+    dialogContent: document.querySelector("#dialog-content"),
+    fullscreen: document.querySelector("#reader-fullscreen"),
+    copyLink: document.querySelector("#reader-copy-link"),
+    copyCitation: document.querySelector("#reader-copy-citation"),
+    downloadMarkdown: document.querySelector("#reader-download-markdown"),
+    print: document.querySelector("#reader-print"),
+    desktopToc: document.querySelector("#desktop-toc"),
+    mobileToc: document.querySelector("#mobile-toc"),
+    mobileTocBody: document.querySelector("#mobile-toc-body"),
+    toast: document.querySelector("#reader-toast"),
+    imageDialog: document.querySelector("#image-dialog"),
+    imageDialogImage: document.querySelector("#image-dialog-image"),
+    imageDialogCaption: document.querySelector("#image-dialog-caption"),
+  };
+
+  const CALLOUT_LABELS = {
+      NOTE: "补充",
+      TIP: "建议",
+      IMPORTANT: "关键判断",
+      WARNING: "发布提醒",
+      CAUTION: "高风险边界",
+  };
+
+  const escapeHtml = (value = "") => String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  function safeLink(url, label, className = "") {
+    if (!url) return escapeHtml(label);
+    return `<a${className ? ` class="${className}"` : ""} href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(label)} ↗</a>`;
+  }
+
+  function inlineMarkdown(text) {
+    return escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g, "<em>$1</em>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+
+  function renderCallout(type, lines) {
+    const paragraphs = lines.join("\n").split(/\n\s*\n/).filter((item) => item.trim());
+    const body = paragraphs.length
+      ? paragraphs.map((paragraph) => `<p>${inlineMarkdown(paragraph.trim().replace(/\n+/g, " "))}</p>`).join("")
+      : "";
+    return `<aside class="callout callout-${type.toLowerCase()}" aria-label="${CALLOUT_LABELS[type]}">
+      <p class="callout-title">${CALLOUT_LABELS[type]}</p>
+      <div class="callout-content">${body}</div>
+    </aside>`;
+  }
+
+  function renderMarkdown(markdown = "") {
+    const lines = markdown.replace(/\r/g, "").split("\n");
+    const output = [];
+    const toc = [];
+    let listType = null;
+    let displayMath = null;
+    let headingIndex = 0;
+    const closeList = () => { if (listType) output.push(`</${listType}>`); listType = null; };
+
+    for (let index = 0; index < lines.length; index += 1) {
+      const raw = lines[index];
+      const line = raw.trim();
+      if (displayMath !== null) {
+        displayMath.push(raw);
+        if (line.endsWith("$$")) {
+          output.push(`<div class="math-block">${escapeHtml(displayMath.join("\n"))}</div>`);
+          displayMath = null;
+        }
+        continue;
+      }
+      if (line.startsWith("$$")) {
+        closeList();
+        if (line.length > 2 && line.endsWith("$$")) output.push(`<div class="math-block">${escapeHtml(line)}</div>`);
+        else displayMath = [raw];
+        continue;
+      }
+      if (!line) { closeList(); continue; }
+
+      const callout = line.match(/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(.*)$/);
+      if (callout) {
+        closeList();
+        const calloutLines = callout[2] ? [callout[2]] : [];
+        while (index + 1 < lines.length && lines[index + 1].trim().startsWith(">")) {
+          index += 1;
+          calloutLines.push(lines[index].trim().replace(/^>\s?/, ""));
+        }
+        output.push(renderCallout(callout[1], calloutLines));
+        continue;
+      }
+
+      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)$/i);
+      if (image) {
+        closeList();
+        const altText = image[1];
+        const imagePath = image[2];
+        const caption = image[3] || "";
+        output.push(`<figure class="paper-figure">
+          <button class="paper-image-button" type="button" data-image-src="${escapeHtml(imagePath)}" data-image-alt="${escapeHtml(altText)}" data-image-caption="${escapeHtml(caption)}" aria-label="放大查看：${escapeHtml(altText)}">
+            <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" />
+          </button>
+          ${caption ? `<figcaption>${inlineMarkdown(caption)}</figcaption>` : ""}
+        </figure>`);
+        continue;
+      }
+
+      const heading = line.match(/^(##|###)\s+(.+)$/);
+      if (heading) {
+        closeList();
+        const level = heading[1].length;
+        headingIndex += 1;
+        const id = `section-${headingIndex}`;
+        toc.push({ id, level, label: heading[2] });
+        output.push(`<h${level} id="${id}">${inlineMarkdown(heading[2])}</h${level}>`);
+        continue;
+      }
+
+      const unordered = line.match(/^[-*]\s+(.+)$/);
+      if (unordered) {
+        if (listType !== "ul") { closeList(); listType = "ul"; output.push("<ul>"); }
+        output.push(`<li>${inlineMarkdown(unordered[1])}</li>`);
+        continue;
+      }
+      const ordered = line.match(/^\d+[.)]\s+(.+)$/);
+      if (ordered) {
+        if (listType !== "ol") { closeList(); listType = "ol"; output.push("<ol>"); }
+        output.push(`<li>${inlineMarkdown(ordered[1])}</li>`);
+        continue;
+      }
+
+      closeList();
+      if (line.startsWith("> ")) output.push(`<blockquote>${inlineMarkdown(line.slice(2))}</blockquote>`);
+      else output.push(`<p>${inlineMarkdown(line)}</p>`);
+    }
+    if (displayMath !== null) output.push(`<pre class="math-error">${escapeHtml(displayMath.join("\n"))}</pre>`);
+    closeList();
+    return { html: output.join(""), toc };
+  }
+
+  function renderMath(container) {
+    if (typeof window.renderMathInElement !== "function") return;
+    window.renderMathInElement(container, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+        { left: "\\(", right: "\\)", display: false },
+        { left: "\\[", right: "\\]", display: true },
+        { left: "\\begin{equation}", right: "\\end{equation}", display: true },
+        { left: "\\begin{align}", right: "\\end{align}", display: true },
+        { left: "\\begin{gather}", right: "\\end{gather}", display: true },
+      ],
+      throwOnError: false,
+      strict: "warn",
+    });
+  }
+
+  function formatDate(value) {
+    if (!value) return "日期未知";
+    return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "short", day: "numeric" })
+      .format(new Date(`${value}T00:00:00`));
+  }
+
+  function citationFor(paper) {
+    const publication = [paper.venue, paper.published].filter(Boolean).join(", ");
+    return `${paper.authors}. “${paper.title}.”${publication ? ` ${publication}.` : ""}${paper.paper_url ? ` ${paper.paper_url}` : ""}`;
+  }
+
+  function rightsMarkup(paper) {
+    const citation = citationFor(paper);
+    const license = safeLink(paper.paper_license_url, paper.paper_license);
+    const source = paper.paper_url
+      ? safeLink(paper.paper_url, "查看原始来源")
+      : "原创演示内容，无外部论文来源";
+    const noteSource = paper.note_source_url
+      ? safeLink(paper.note_source_url, "查看笔记原始版本")
+      : "当前仓库中的原创笔记";
+    const media = paper.media && paper.media.length
+      ? `<ul>${paper.media.map((item) => `<li><strong>${escapeHtml(item.alt)}</strong>：${inlineMarkdown(item.caption)}</li>`).join("")}</ul>`
+      : "<p>本页没有保存或转载原论文图片。</p>";
+    return `<section class="rights-panel" aria-labelledby="rights-title">
+      <p class="section-index">SOURCE / RIGHTS</p>
+      <h2 id="rights-title">作品与许可</h2>
+      <dl class="rights-list">
+        <div><dt>对应作品</dt><dd><cite>${escapeHtml(citation)}</cite><br />${source}</dd></div>
+        <div><dt>作品许可</dt><dd>${license}</dd></div>
+        <div><dt>本页笔记</dt><dd>© ${escapeHtml((paper.read_date || "2026").slice(0, 4))} ${escapeHtml(paper.note_author)}. ${escapeHtml(paper.note_license)}<br />${noteSource}</dd></div>
+        <div><dt>发布状态</dt><dd>${paper.sharing === "public" ? "公开发布" : "仅本地保存，不进入公开构建"}</dd></div>
+      </dl>
+      <div class="media-rights"><h3>图像清单</h3>${media}</div>
+      <p class="rights-disclaimer">原作品、转载图像和本页文字各自适用独立权利。链接与引用不等于取得转载授权；使用前请回到原始来源确认最新条款。</p>
+    </section>`;
+  }
+
+  function tocMarkup(toc) {
+    if (!toc.length) return "<p class=\"toc-empty\">本文没有章节标题。</p>";
+    return toc.map((item) => `<button class="toc-link toc-level-${item.level}" type="button" data-target="${item.id}">${escapeHtml(item.label)}</button>`).join("");
+  }
+
+  function syncDialogScrollLock() {
+    const root = document.documentElement;
+    const body = document.body;
+    const shouldLock = elements.dialog.open || elements.imageDialog.open;
+    const isLocked = root.classList.contains("dialog-open");
+    if (shouldLock && !isLocked) {
+      lockedScrollY = window.scrollY;
+      root.classList.add("dialog-open");
+      body.style.top = `-${lockedScrollY}px`;
+      return;
+    }
+    if (!shouldLock && isLocked) {
+      root.classList.add("restoring-scroll");
+      root.classList.remove("dialog-open");
+      body.style.removeProperty("top");
+      window.scrollTo(0, lockedScrollY);
+      requestAnimationFrame(() => root.classList.remove("restoring-scroll"));
+    }
+  }
+
+  function allTags() {
+    const counts = new Map();
+    data.papers.forEach((paper) => paper.tags.forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1)));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }
+
+  function renderTags() {
+    const tags = [["全部", data.papers.length], ...allTags()];
+    elements.tags.innerHTML = tags.map(([tag, count]) => `
+      <button class="tag-button ${state.tag === tag ? "active" : ""}" type="button" data-tag="${escapeHtml(tag)}">
+        ${escapeHtml(tag)} · ${count}
+      </button>`).join("");
+    elements.tags.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => {
+      state.tag = button.dataset.tag;
+      renderTags();
+      renderPapers();
+    }));
+  }
+
+  function filteredPapers() {
+    const needle = state.query.trim().toLocaleLowerCase();
+    const filtered = data.papers.filter((paper) => {
+      const tagMatch = state.tag === "全部" || paper.tags.includes(state.tag);
+      const haystack = [paper.title, paper.authors, paper.venue, paper.one_liner, paper.body, paper.paper_license, ...paper.tags].join(" ").toLocaleLowerCase();
+      return tagMatch && (!needle || haystack.includes(needle));
+    });
+    return filtered.sort((a, b) => {
+      if (state.sort === "title") return a.title.localeCompare(b.title);
+      return b.read_date.localeCompare(a.read_date)
+        || (b.read_at || "").localeCompare(a.read_at || "")
+        || a.title.localeCompare(b.title);
+    });
+  }
+
+  function paperCard(paper) {
+    const tags = paper.tags.slice(0, 3).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
+    return `<article class="paper-card">
+      <button class="card-button" type="button" data-slug="${escapeHtml(paper.slug)}" aria-label="打开《${escapeHtml(paper.title)}》详情">
+        <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span>${formatDate(paper.read_date)}</span></div>
+        <h3>${escapeHtml(paper.title)}</h3>
+        <p class="authors">${escapeHtml(paper.authors)}${paper.venue ? ` · ${escapeHtml(paper.venue)}` : ""}</p>
+        <p class="one-liner">${escapeHtml(paper.one_liner)}</p>
+        <div class="card-bottom"><div class="card-tags">${tags}</div><span class="arrow" aria-hidden="true">OPEN →</span></div>
+      </button>
+    </article>`;
+  }
+
+  function renderPapers() {
+    const papers = filteredPapers();
+    elements.grid.innerHTML = papers.map(paperCard).join("");
+    elements.count.textContent = `${papers.length} / ${data.papers.length} PUBLIC NOTES`;
+    elements.empty.hidden = papers.length !== 0;
+    elements.grid.hidden = papers.length === 0;
+    elements.grid.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => openPaper(button.dataset.slug)));
+  }
+
+  function showToast(message) {
+    clearTimeout(toastTimer);
+    elements.toast.textContent = message;
+    elements.toast.classList.add("visible");
+    toastTimer = setTimeout(() => elements.toast.classList.remove("visible"), 1800);
+  }
+
+  async function copyText(text, successMessage) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_error) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+    showToast(successMessage);
+  }
+
+  function setFullscreen(enabled) {
+    elements.dialog.classList.toggle("reader-fullscreen", enabled);
+    elements.fullscreen.textContent = enabled ? "退出全窗口" : "全窗口阅读";
+    elements.fullscreen.setAttribute("aria-pressed", String(enabled));
+    elements.mobileToc.open = false;
+  }
+
+  function openPaper(slug, updateHash = true) {
+    const paper = data.papers.find((item) => item.slug === slug);
+    if (!paper) return;
+    state.activePaper = paper;
+    setFullscreen(false);
+    const rendered = renderMarkdown(paper.body);
+    elements.dialogContent.innerHTML = `
+      <p class="detail-kicker">${escapeHtml(paper.status)} · ${formatDate(paper.read_date)}</p>
+      <h1 id="dialog-title">${escapeHtml(paper.title)}</h1>
+      <div class="detail-meta"><span>${escapeHtml(paper.authors)}</span><span>${escapeHtml(paper.venue)}</span><span>${escapeHtml(paper.published)}</span></div>
+      <p class="detail-summary">${escapeHtml(paper.one_liner)}</p>
+      <div class="detail-body">${rendered.html}</div>
+      ${rightsMarkup(paper)}`;
+    const toc = tocMarkup(rendered.toc);
+    elements.desktopToc.innerHTML = toc;
+    elements.mobileTocBody.innerHTML = toc;
+    elements.downloadMarkdown.href = `notes/${encodeURIComponent(paper.source_file)}`;
+    elements.downloadMarkdown.download = paper.source_file;
+    renderMath(elements.dialogContent);
+    if (!elements.dialog.open) elements.dialog.showModal();
+    elements.dialog.scrollTop = 0;
+    syncDialogScrollLock();
+    if (updateHash) history.pushState({ slug }, "", `#paper=${encodeURIComponent(slug)}`);
+  }
+
+  function closePaper(updateHash = true) {
+    if (elements.dialog.open) elements.dialog.close();
+    if (updateHash && location.hash.startsWith("#paper=")) history.pushState({}, "", location.pathname + location.search);
+  }
+
+  function openImage(button) {
+    elements.imageDialogImage.src = button.dataset.imageSrc;
+    elements.imageDialogImage.alt = button.dataset.imageAlt || "论文图片";
+    elements.imageDialogCaption.textContent = button.dataset.imageCaption || "";
+    elements.imageDialogCaption.hidden = !button.dataset.imageCaption;
+    elements.imageDialog.showModal();
+    syncDialogScrollLock();
+  }
+
+  function openFromHash() {
+    const match = location.hash.match(/^#paper=(.+)$/);
+    if (match) openPaper(decodeURIComponent(match[1]), false);
+    else closePaper(false);
+  }
+
+  function scrollToSection(event) {
+    const button = event.target.closest("[data-target]");
+    if (!button) return;
+    const target = elements.dialogContent.querySelector(`#${button.dataset.target}`);
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    elements.mobileToc.open = false;
+  }
+
+  function printPaper() {
+    if (!state.activePaper) return;
+    const previousTitle = document.title;
+    document.title = `${state.activePaper.title} · Paper Notes`;
+    const restoreTitle = () => { document.title = previousTitle; removeEventListener("afterprint", restoreTitle); };
+    addEventListener("afterprint", restoreTitle);
+    window.print();
+  }
+
+  function initStats() {
+    const uniqueDays = new Set(data.papers.map((paper) => paper.read_date)).size;
+    document.querySelector("#stat-papers").textContent = data.papers.length;
+    document.querySelector("#stat-tags").textContent = allTags().length;
+    document.querySelector("#stat-days").textContent = uniqueDays;
+    document.querySelector("#last-updated").textContent = data.generated_at ? `Last sync ${formatDate(data.generated_at.slice(0, 10))}` : "";
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem("paper-notes-theme") || localStorage.getItem("paper-recap-theme");
+    const preferred = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.dataset.theme = saved || preferred;
+    document.querySelector("#theme-toggle").addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("paper-notes-theme", next);
+    });
+  }
+
+  elements.search.addEventListener("input", (event) => { state.query = event.target.value; renderPapers(); });
+  elements.sort.addEventListener("change", (event) => { state.sort = event.target.value; renderPapers(); });
+  document.querySelector("#clear-filters").addEventListener("click", () => {
+    state.query = ""; state.tag = "全部"; elements.search.value = ""; renderTags(); renderPapers();
+  });
+  document.querySelector("#dialog-close").addEventListener("click", () => closePaper());
+  elements.fullscreen.addEventListener("click", () => setFullscreen(!elements.dialog.classList.contains("reader-fullscreen")));
+  elements.copyLink.addEventListener("click", () => copyText(location.href, "论文链接已复制"));
+  elements.copyCitation.addEventListener("click", () => {
+    if (state.activePaper) copyText(citationFor(state.activePaper), "引用已复制");
+  });
+  elements.print.addEventListener("click", printPaper);
+  elements.desktopToc.addEventListener("click", scrollToSection);
+  elements.mobileTocBody.addEventListener("click", scrollToSection);
+  elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closePaper(); });
+  elements.dialog.addEventListener("close", () => {
+    state.activePaper = null;
+    setFullscreen(false);
+    syncDialogScrollLock();
+    if (location.hash.startsWith("#paper=")) history.pushState({}, "", location.pathname + location.search);
+  });
+  elements.dialogContent.addEventListener("click", (event) => {
+    const button = event.target.closest(".paper-image-button");
+    if (button) openImage(button);
+  });
+  document.querySelector("#image-dialog-close").addEventListener("click", () => elements.imageDialog.close());
+  elements.imageDialog.addEventListener("close", () => {
+    elements.imageDialogImage.removeAttribute("src");
+    syncDialogScrollLock();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "/" && !elements.dialog.open && document.activeElement !== elements.search) {
+      event.preventDefault();
+      elements.search.focus();
+    }
+  });
+  addEventListener("popstate", openFromHash);
+
+  initTheme(); initStats(); renderTags(); renderPapers(); openFromHash();
+})();

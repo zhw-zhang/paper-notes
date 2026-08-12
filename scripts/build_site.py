@@ -1,0 +1,281 @@
+#!/usr/bin/env python3
+"""Validate paper notes and build the dependency-free static site."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import json
+import re
+import shutil
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONTENT_DIR = ROOT / "content" / "papers"
+MEDIA_DIR = ROOT / "content" / "media"
+DIST_DIR = ROOT / "dist"
+PUBLIC_DIST_DIR = ROOT / "dist-public"
+MAX_MEDIA_BYTES = 2 * 1024 * 1024
+IMAGE_PATTERN = re.compile(
+    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)\s*$',
+    re.IGNORECASE | re.MULTILINE,
+)
+REQUIRED_FIELDS = {
+    "title", "paper_url", "authors", "venue", "published", "read_date",
+    "status", "tags", "one_liner", "paper_license", "paper_license_url",
+    "note_author", "note_license", "note_source_url", "sharing",
+}
+REQUIRED_SECTIONS = (
+    "研究问题", "核心方法", "关键发现", "我的提问",
+    "局限与疑问", "我的判断", "下次只看这些",
+)
+ALLOWED_SHARING = {"private", "public"}
+ALLOWED_CALLOUTS = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
+
+
+class ContentError(ValueError):
+    pass
+
+
+def validate_url(value: str, field: str, *, allow_empty: bool = True) -> None:
+    if not value and allow_empty:
+        return
+    if not re.match(r"^https?://[^\s]+$", value):
+        raise ContentError(f"{field} 必须是 http(s) URL" + (" 或空字符串" if allow_empty else ""))
+
+
+def validate_callouts(body: str) -> None:
+    for callout_type in re.findall(r"^>\s*\[!([^\]]+)\]", body, re.MULTILINE):
+        if callout_type not in ALLOWED_CALLOUTS:
+            allowed = ", ".join(sorted(ALLOWED_CALLOUTS))
+            raise ContentError(f"不支持提示块类型 {callout_type!r}；可用类型：{allowed}")
+
+
+def validate_images(body: str, slug: str) -> list[dict]:
+    matches = list(IMAGE_PATTERN.finditer(body))
+    if body.count("![") != len(matches):
+        raise ContentError(
+            "图片语法无效；请使用 ![替代文本](media/<slug>/image.webp \"图注与来源\")"
+        )
+
+    media_root = MEDIA_DIR.resolve()
+    expected_prefix = f"media/{slug}/"
+    images = []
+    for match in matches:
+        alt_text, relative_path, caption = match.groups()
+        if not alt_text.strip():
+            raise ContentError("图片必须包含非空替代文本")
+        if not caption or not caption.strip():
+            raise ContentError(f"图片 {relative_path} 必须包含图注与来源")
+        if not relative_path.startswith(expected_prefix):
+            raise ContentError(
+                f"图片 {relative_path} 必须放在 content/media/{slug}/ 并使用 media/{slug}/... 引用"
+            )
+
+        media_path = (ROOT / "content" / relative_path).resolve()
+        try:
+            media_path.relative_to(media_root)
+        except ValueError as exc:
+            raise ContentError(f"图片路径越界：{relative_path}") from exc
+        if not media_path.is_file():
+            raise ContentError(f"图片不存在：content/{relative_path}")
+        if media_path.stat().st_size > MAX_MEDIA_BYTES:
+            size_mb = media_path.stat().st_size / (1024 * 1024)
+            raise ContentError(f"图片超过 2 MiB：{relative_path} ({size_mb:.2f} MiB)")
+        if "来源" not in caption:
+            raise ContentError(f"图片 {relative_path} 的图注必须注明来源")
+        if not re.search(r"(?:CC\s|许可|License|版权)", caption, re.IGNORECASE):
+            raise ContentError(f"图片 {relative_path} 的图注必须注明许可或版权状态")
+        images.append({"alt": alt_text, "path": relative_path, "caption": caption})
+    return images
+
+
+def parse_scalar(raw: str):
+    raw = raw.strip()
+    if not raw:
+        return ""
+    if raw.startswith("[") and raw.endswith("]"):
+        try:
+            return ast.literal_eval(raw)
+        except (SyntaxError, ValueError) as exc:
+            raise ContentError(f"无法解析列表 {raw!r}") from exc
+    if (raw.startswith('"') and raw.endswith('"')) or (raw.startswith("'") and raw.endswith("'")):
+        return raw[1:-1]
+    if re.fullmatch(r"-?\d+", raw):
+        return int(raw)
+    return raw
+
+
+def parse_note(path: Path) -> dict:
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    match = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.DOTALL)
+    if not match:
+        raise ContentError("必须以 --- 包围的元数据开头")
+
+    metadata = {}
+    for line_number, line in enumerate(match.group(1).splitlines(), start=2):
+        if not line.strip():
+            continue
+        if ":" not in line:
+            raise ContentError(f"第 {line_number} 行不是 key: value 格式")
+        key, raw_value = line.split(":", 1)
+        metadata[key.strip()] = parse_scalar(raw_value)
+
+    missing = sorted(REQUIRED_FIELDS - metadata.keys())
+    if missing:
+        raise ContentError(f"缺少字段：{', '.join(missing)}")
+    if not isinstance(metadata["tags"], list) or not metadata["tags"]:
+        raise ContentError("tags 必须是至少含一个主题的列表")
+    if not all(isinstance(tag, str) and tag.strip() for tag in metadata["tags"]):
+        raise ContentError("tags 中的每一项都必须是非空文本")
+    try:
+        datetime.strptime(str(metadata["read_date"]), "%Y-%m-%d")
+    except ValueError as exc:
+        raise ContentError("read_date 必须使用 YYYY-MM-DD") from exc
+    if metadata.get("read_at"):
+        try:
+            read_at = datetime.fromisoformat(str(metadata["read_at"]).replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ContentError("read_at 必须使用带时区的 ISO 8601 时间") from exc
+        if read_at.tzinfo is None:
+            raise ContentError("read_at 必须包含时区，例如 +08:00")
+        if read_at.date().isoformat() != str(metadata["read_date"]):
+            raise ContentError("read_at 的本地日期必须与 read_date 一致")
+    if not str(metadata["title"]).strip() or not str(metadata["one_liner"]).strip():
+        raise ContentError("title 和 one_liner 不能为空")
+    for field in ("paper_license", "note_author", "note_license"):
+        if not str(metadata[field]).strip():
+            raise ContentError(f"{field} 不能为空")
+    validate_url(str(metadata["paper_url"]), "paper_url")
+    validate_url(str(metadata["paper_license_url"]), "paper_license_url")
+    validate_url(str(metadata["note_source_url"]), "note_source_url")
+    if metadata["sharing"] not in ALLOWED_SHARING:
+        raise ContentError("sharing 只能是 private 或 public")
+    if metadata["sharing"] == "public" and metadata["note_author"] != "littlewei":
+        if metadata.get("publication_permission") != "confirmed":
+            raise ContentError(
+                "非 littlewei 撰写的笔记公开前必须取得授权，并设置 publication_permission: \"confirmed\""
+            )
+
+    slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
+    body = match.group(2).strip()
+    if body.count("$$") % 2:
+        raise ContentError("独立公式的 $$ 分隔符没有成对闭合")
+    if body.count("\\[") != body.count("\\]"):
+        raise ContentError("独立公式的 \\[ 与 \\] 分隔符没有成对闭合")
+    headings = set(re.findall(r"^##\s+(.+?)\s*$", body, re.MULTILINE))
+    missing_sections = [section for section in REQUIRED_SECTIONS if section not in headings]
+    if missing_sections:
+        raise ContentError(f"缺少章节：{', '.join(missing_sections)}")
+    validate_callouts(body)
+    images = validate_images(body, slug)
+
+    metadata["slug"] = slug
+    metadata["body"] = body
+    metadata["source_file"] = path.name
+    metadata["media"] = images
+    return metadata
+
+
+def load_papers() -> list[dict]:
+    papers, errors, seen_slugs = [], [], set()
+    for path in sorted(CONTENT_DIR.glob("*.md")):
+        try:
+            paper = parse_note(path)
+            if paper["slug"] in seen_slugs:
+                raise ContentError(f"slug 重复：{paper['slug']}")
+            seen_slugs.add(paper["slug"])
+            papers.append(paper)
+        except ContentError as exc:
+            errors.append(f"{path.relative_to(ROOT)}: {exc}")
+    if errors:
+        raise ContentError("\n".join(errors))
+    if not papers:
+        raise ContentError("content/papers 中没有阅读记录")
+    return sorted(
+        papers,
+        key=lambda item: (item["read_date"], item.get("read_at", ""), item["title"]),
+        reverse=True,
+    )
+
+
+def write_data(path: Path, papers: list[dict], build_mode: str) -> None:
+    payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "build_mode": build_mode,
+        "papers": papers,
+    }
+    json_text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    path.write_text(f"window.PAPER_NOTES_DATA = {json_text};\n", encoding="utf-8")
+
+
+def copy_selected_media(papers: list[dict], destination: Path) -> None:
+    for paper in papers:
+        for image in paper["media"]:
+            source = ROOT / "content" / image["path"]
+            target = destination / image["path"]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+
+
+def build(papers: list[dict], *, public: bool = False) -> Path:
+    output_dir = PUBLIC_DIST_DIR if public else DIST_DIR
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    (output_dir / "assets").mkdir(parents=True)
+    (output_dir / "notes").mkdir(parents=True)
+    for filename in ("index.html", "404.html", ".nojekyll"):
+        shutil.copy2(ROOT / filename, output_dir / filename)
+    for filename in ("styles.css", "app.js"):
+        shutil.copy2(ROOT / "assets" / filename, output_dir / "assets" / filename)
+    for paper in papers:
+        shutil.copy2(CONTENT_DIR / paper["source_file"], output_dir / "notes" / paper["source_file"])
+    if public:
+        copy_selected_media(papers, output_dir)
+    elif MEDIA_DIR.exists():
+        shutil.copytree(MEDIA_DIR, output_dir / "media")
+    write_data(output_dir / "assets" / "papers.js", papers, "public" if public else "private")
+    return output_dir
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="仅校验内容，不创建 dist")
+    parser.add_argument(
+        "--public", action="store_true",
+        help="只构建 sharing: public 的笔记，并写入 dist-public",
+    )
+    parser.add_argument(
+        "--check-public-repo", action="store_true",
+        help="确认仓库中不存在 sharing: private 的已跟踪笔记",
+    )
+    args = parser.parse_args()
+    try:
+        all_papers = load_papers()
+        if args.check_public_repo:
+            private_files = [paper["source_file"] for paper in all_papers if paper["sharing"] != "public"]
+            if private_files:
+                raise ContentError(
+                    "公开仓库不能提交 private 笔记：" + ", ".join(private_files)
+                )
+            print(f"公开仓库校验通过：{len(all_papers)} 篇记录均可公开")
+            return 0
+        papers = [paper for paper in all_papers if paper["sharing"] == "public"] if args.public else all_papers
+        if not args.check:
+            output_dir = build(papers, public=args.public)
+    except ContentError as exc:
+        print(f"内容校验失败：\n{exc}", file=sys.stderr)
+        return 1
+    scope = "公开" if args.public else "本地完整"
+    if args.check:
+        print(f"校验通过（{scope}模式）：{len(papers)} 篇阅读记录")
+    else:
+        print(f"构建完成（{scope}模式）：{len(papers)} 篇阅读记录 → {output_dir.relative_to(ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
