@@ -513,7 +513,7 @@ accent_headings: []
       <p class="detail-kicker">${escapeHtml(paper.status)} · ${formatDate(paper.read_date)}</p>
       <h1 id="dialog-title">${escapeHtml(paper.title)}</h1>
       <div class="detail-meta"><span>${escapeHtml(paper.authors)}</span><span>${escapeHtml(paper.venue)}</span><span>${escapeHtml(paper.published)}</span></div>
-      <p class="detail-summary">${escapeHtml(paper.one_liner)}</p>
+      <p class="detail-summary">“${escapeHtml(paper.one_liner)}”</p>
       <div class="detail-body">${rendered.html}</div>
       ${rightsMarkup(paper)}`;
     const toc = tocMarkup(rendered.toc);
