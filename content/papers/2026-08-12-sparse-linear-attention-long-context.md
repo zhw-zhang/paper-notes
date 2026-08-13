@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T23:06:18+08:00"
 created_at: "2026-08-12T23:06:18+08:00"
-updated_at: "2026-08-13T01:16:17+08:00"
+updated_at: "2026-08-13T15:52:59+08:00"
 status: "已精读"
 tags: ["Attention", "Long Context", "Linear Attention", "Sparse Attention", "Video Generation"]
 one_liner: "面对超长上下文，Sparse Attention 精确保留少数 top-K 尖峰，Linear Attention 低成本覆盖大面积长尾；更好的答案是让二者分工。另外Kimi-k3更是验证了不同的答案，KDA+MLA的结合，同时Adobe也进一步在Chimera上验证了这一套的能力，除了效率之外甚至具有zero-shot外推能力"
@@ -40,8 +40,7 @@ $$
 
 长度为 $L$ 时，需要处理一个 $L\times L$ 的注意力矩阵，计算复杂度约为 $O(L^2d)$。文本来到百万 token，或者视频 token 同时随帧数、分辨率和时长增长时，这个二次复杂度会很快成为训练与推理瓶颈。
 
-![本文要表达的attention区别](<img width="805" height="453" alt="image" src="https://github.com/user-attachments/assets/b0b80b98-3929-4f3d-9566-1589c0f7fbd0" />
- "图 1｜从 Full Attention 到 Sparse–Linear Attention发展历程。来源：OpenAI 内置图像生成能力按 littlewei 的笔记生成；版权：littlewei，All Rights Reserved")
+![Full Attention、Sparse Attention、Linear Attention 与混合路线总览](media/sparse-linear-attention-long-context/01-attention-landscape.png "图 1｜Full Attention 分化为 Sparse Attention 与 Linear Attention，并汇总 Sparse–Linear Hybrid、Kimi-K3 和 Chimera 三类代表案例。来源：OpenAI 内置图像生成能力按 littlewei 的笔记生成；版权：littlewei，All Rights Reserved。")
 
 ## 核心方法
 

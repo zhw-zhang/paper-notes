@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T22:55:00+08:00"
 created_at: "2026-08-12T22:55:00+08:00"
-updated_at: "2026-08-13T01:27:54+08:00"
+updated_at: "2026-08-13T15:58:32+08:00"
 status: "使用指南"
 tags: ["Tutorial",]
 one_liner: "这是一篇可以边看边抄的样式手册：用同一页学习新建、标签、短色条标题、五种提示块、两种公式、分享链接、Markdown 与 PDF。"
@@ -28,39 +28,19 @@ Paper Notes 的目标不是把论文全文搬进来，而是让未来的自己�
 
 ## 核心方法
 
-最简单的方式是直接对 Codex 说：`使用 $update-paper-notes，把这篇论文和我的理解发布到 Paper Notes。` 技能会核对论文、去重、补齐许可、生成 Markdown、校验并推送。
+Paper Notes 的日常工作流由你自己掌控：**VS Code 新建和修改 → 本地预览 → 决定是否公开 → 校验并上传**。Codex 只是可选的发布助手，不会取代你对笔记内容的修改和判断。
 
-如果只想先写草稿，要明确说“先起草，不发布”。草稿会放在被 Git 忽略的 `content/private/`，不会出现在公开 Pages 构建中。
+### 用 VS Code 打开笔记库
 
-### 直接在网页新建或修改
+在终端运行：
 
-公开网站页眉有一个低调的“管理”菜单：
-
-- “新建公开笔记”会打开 GitHub 文件编辑器，并自动填好当前日期、时间、许可字段和七个固定章节。
-- “管理公开笔记”用于浏览 `content/papers/` 中的全部公开 Markdown。
-- “打开完整网页编辑器”会进入 `github.dev`，适合连续修改多篇笔记。
-
-打开任意笔记后，顶部工具栏的“在线编辑”会精确跳转到当前 Markdown。修改完成后在 GitHub 点击提交，推送到 `main` 后 Pages 会自动校验和发布，不需要本地构建或命令行。
-
-> [!WARNING]
-> 网页入口只能创建公开笔记。网站不保存 GitHub Token，GitHub 会检查账号权限；普通访客即使看到编辑入口，也不能直接修改正式仓库。私人、公司内部或未公开内容仍然只能放在未提交的本地草稿中。
-
-### 创建第一篇笔记：推荐方式
-
-准备论文链接和哪怕很零散的理解，然后直接对 Codex 说：
-
-```text
-使用 $update-paper-notes，先为这篇论文创建一篇仅本地草稿，不发布：
-
-论文：https://arxiv.org/abs/xxxx.xxxxx
-我的理解：……
-重要问答：……
-我的判断：……
+```bash
+code "/Users/zhwzhang/Nutstore Files/我的坚果云/2 individual/future_me/paper-notes"
 ```
 
-Codex 会创建 Markdown、核对论文与许可并运行校验。你确认内容以后，再说：`把这篇笔记设为公开并上传到 Paper Notes。`
+或在 VS Code 中选择“文件 → 打开文件夹”，打开 `paper-notes`。之后的新建、编辑、图片管理和本地预览都在这个窗口完成。
 
-### 创建第一篇笔记：手工方式
+### 在 VS Code 创建第一篇笔记
 
 在仓库目录运行：
 
@@ -70,6 +50,8 @@ cp content/TEMPLATE.md content/private/2026-08-12-my-first-paper.md
 ```
 
 文件名使用“阅读日期 + 简短英文 slug”。打开新文件后，至少修改标题、论文链接、作者、标签、one-liner、许可和正文七个章节。
+
+如果是已经准备公开的笔记，也可以直接把模板复制到 `content/papers/`，并把 `sharing` 设为 `"public"`。不确定时默认放入 `content/private/`。
 
 卡片左上角的文字来自 `status`，右上角日期来自 `read_date`，都可以逐篇修改。例如：
 
@@ -85,12 +67,19 @@ status: "已精读"
 
 ### 本地预览
 
+用 VS Code 打开仓库根目录，然后选择菜单“终端 → 运行任务”，再选“Paper Notes：本地预览”。脚本会自动打开 `http://localhost:8000`；保存 Markdown、图片或样式后，站点会自动重建，浏览器也会自动刷新。停止预览时，在任务终端按 `Control+C`。
+
+如果不使用 VS Code，仍可以手工运行：
+
 ```bash
 python3 scripts/build_site.py
 python3 -m http.server 8000 --directory dist
 ```
 
 浏览器打开 `http://localhost:8000`。本地完整构建会同时显示公开笔记和 `content/private/` 中的草稿。
+
+> [!TIP]
+> 先在 VS Code 中编辑和本地预览，确认图片、公式和卡片都正常后再推送。本地预览不会自动上传任何内容。
 
 ### 设置单篇、标签或全部可见性
 
@@ -111,25 +100,35 @@ python3 scripts/manage_visibility.py
 
 ### 上传公开笔记
 
-最简单的方式是告诉 Codex：`把已经设为公开的笔记检查后上传到 Paper Notes。` 它会执行公开边界检查、构建、提交、推送并等待 Pages 完成。
-
-手工上传前先运行：
+本地预览满意后，先查看本次修改了哪些文件，再做发布前校验：
 
 ```bash
+git status --short
 python3 scripts/build_site.py --check-public-repo
 python3 scripts/build_site.py --public
 ```
 
-确认无误后，只提交 `content/papers/` 中准备公开的笔记和相关改动，再推送到 `main`。把示例文件名换成自己的：
+确认无误后，只加入这次准备公开的 Markdown 和图片，再推送到 `main`。把示例路径换成自己的：
 
 ```bash
 git add content/papers/2026-08-12-my-first-paper.md
+git add content/media/my-first-paper/
 git commit -m "content: add my-first-paper"
 git pull --rebase origin main
 git push origin main
 ```
 
-如果笔记包含已确认许可的图片，也要明确加入对应的 `content/media/<slug>/`。`content/private/` 已被 Git 忽略，不应进入提交。推送完成后，GitHub Pages 会自动构建公开网站。
+如果笔记包含已确认许可的图片，图片文件必须真正保存在 `content/media/<slug>/`，并与 Markdown 一起 `git add`。不要把 GitHub 生成的 `<img ...>` 代码套进 Markdown 图片语法。`content/private/` 已被 Git 忽略，不应进入提交。推送完成后，GitHub Pages 会自动构建公开网站。
+
+> [!TIP]
+> 如果你已经在 VS Code 中改好并本地预览过，只是不想手工上传，可以对 Codex 说：**“把我刚才在 VS Code 修改的 Paper Notes 检查后上传；只提交本次改动，并等待 Pages 发布完成。”** Codex 会只负责核对、提交和发布，不重写你的笔记。
+
+### 临时在网页快速修改（可选）
+
+公开网站的“管理”和笔记顶部的“在线编辑”仍然可用，适合临时修正一两行文字。网页编辑会直接提交公开仓库，不能先看本地完整预览，因此不建议用它添加图片或大幅修改排版。
+
+> [!WARNING]
+> 网页入口只适合准备立即公开的内容。GitHub 会检查账号权限；普通访客不能直接修改正式仓库，但私人、公司内部或未公开内容仍然不应在网页编辑器中创建。
 
 无论用哪种方式，正文都应完成七个固定章节。
 
