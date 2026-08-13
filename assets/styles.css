@@ -11,9 +11,9 @@
   --grid: rgba(96, 70, 215, 0.024);
   --accent: #6553cb;
   --accent-2: #d9fa62;
-  --summary-bg: #d9ee72;
-  --summary-line: #879b31;
-  --summary-ink: #1f2715;
+  --summary-bg: #f0fbef;
+  --summary-line: #9bc499;
+  --summary-ink: #203020;
   --selection: #4a352d;
   --selection-ink: #fff9f0;
   --hot: #e26349;
@@ -317,7 +317,7 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
   #paper-dialog::backdrop, .reader-toolbar, .desktop-toc-panel, .mobile-toc, .reader-toast { display: none !important; }
   .reader-shell { display: block !important; }
   .paper-detail { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; color: #111 !important; }
-  .detail-summary { color: #1f2715 !important; border-left-color: #879b31 !important; background: #e7f2a9 !important; }
+  .detail-summary { color: #203020 !important; border-left-color: #9bc499 !important; background: #f0fbef !important; }
   .detail-body p, .detail-body li, .rights-line { color: #111 !important; }
   .detail-body h2, .rights-line, .paper-figure, .callout { break-inside: avoid; }
   a { color: #111 !important; text-decoration: none; }
