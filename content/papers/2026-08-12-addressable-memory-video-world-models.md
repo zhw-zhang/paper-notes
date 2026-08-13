@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T22:20:00+08:00"
 created_at: "2026-08-12T22:20:00+08:00"
-updated_at: "2026-08-12T22:20:00+08:00"
+updated_at: "2026-08-14T01:37:58+08:00"
 status: "已整理"
 tags: ["Video Generation", "World Models", "KV Cache"]
 one_liner: "WorldTrace 先解决记忆能否被找到，再解决应该记住什么：把压缩后的 Key 放回训练分布内的虚拟位置，并用 Field 与 Landmark 两种写入器分别维护连续性和事件回忆。"
@@ -39,7 +39,7 @@ $$
 
 对于当前 query 位置 $q$，第 $s$ 个摘要槽位不沿用内容原来的绝对时间，而是按槽位次序获得一个固定的虚拟位置：
 
-$$ {.plain}
+$$
 t_s^v = q - \left(L_{\mathrm{attn}} - 1 - s\right),
 \qquad s=0,\ldots,N_s-1
 $$

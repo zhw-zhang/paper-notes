@@ -138,7 +138,7 @@
       if (displayMath !== null) {
         displayMath.push(raw);
         if (line.endsWith("$$")) {
-          const mathClass = displayMathStyle === "plain" ? " math-plain" : "";
+          const mathClass = displayMathStyle === "boxed" ? " math-boxed" : "";
           output.push(`<div class="math-block${mathClass}">${escapeHtml(displayMath.join("\n"))}</div>`);
           displayMath = null;
           displayMathStyle = "";
@@ -147,7 +147,7 @@
       }
       if (line.startsWith("$$")) {
         closeList();
-        const styledMath = line.match(/^\$\$\s+\{\.(plain)\}\s*$/);
+        const styledMath = line.match(/^\$\$\s+\{\.(plain|boxed)\}\s*$/);
         if (styledMath) {
           displayMath = ["$$"];
           displayMathStyle = styledMath[1];

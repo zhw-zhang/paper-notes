@@ -45,7 +45,7 @@ Avoid an H1 in the body, pasted abstracts, or long chat transcripts.
 ## Mathematics and callouts
 
 - Use `$...$` for inline math and `$$...$$` for display math.
-- Use `$$ {.plain}` as the opening delimiter when a display formula should have no background panel; plain and default blocks may coexist.
+- Display formulas have no background panel by default. Use `$$ {.boxed}` as the opening delimiter only when a formula needs a shaded panel. `$$ {.plain}` remains valid for older notes but is unnecessary in new writing.
 - Keep formulas editable, define symbols nearby, and prefer KaTeX-supported commands.
 - Allowed callouts are `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, and `CAUTION`.
 

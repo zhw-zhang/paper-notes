@@ -30,7 +30,7 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 - Keep `one_liner` specific enough to restore the core mechanism six months later.
 - Keep two to five focused tags and reuse existing spellings.
 - Use concrete result numbers only when supplied or verified.
-- Keep important formulas as editable LaTeX and define symbols nearby. Display formulas use the shaded style by default; use `$$ {.plain}` selectively for a no-background formula.
+- Keep important formulas as editable LaTeX and define symbols nearby. Display formulas have no background by default; use `$$ {.boxed}` selectively when a formula needs a shaded panel. Accept `$$ {.plain}` only for compatibility with older notes.
 - Make `下次只看这些` one to three memory anchors or actions.
 - Do not edit generated `dist/`, `dist-public/`, or `assets/papers.js`.
 - Keep the status label short; it and `read_date` appear at the top of each card. The site can sort by `read_at`, `updated_at`, or `created_at`.

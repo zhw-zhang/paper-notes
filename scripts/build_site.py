@@ -181,11 +181,13 @@ def parse_note(path: Path) -> dict:
     body = match.group(2).strip()
     if body.count("```") % 2:
         raise ContentError("代码块的 ``` 分隔符没有成对闭合")
-    if body.count("$$") % 2:
+    math_validation_body = re.sub(r"```[\s\S]*?```", "", body)
+    math_validation_body = re.sub(r"`[^`\n]*`", "", math_validation_body)
+    if math_validation_body.count("$$") % 2:
         raise ContentError("独立公式的 $$ 分隔符没有成对闭合")
-    for math_style in re.findall(r"^\$\$\s+\{\.([^}]+)\}\s*$", body, re.MULTILINE):
-        if math_style != "plain":
-            raise ContentError(f"不支持公式样式 {math_style!r}；当前只支持 plain")
+    for math_style in re.findall(r"^\$\$\s+\{\.([^}]+)\}\s*$", math_validation_body, re.MULTILINE):
+        if math_style not in {"plain", "boxed"}:
+            raise ContentError(f"不支持公式样式 {math_style!r}；当前支持 boxed（plain 仅为旧笔记兼容）")
     if body.count("\\[") != body.count("\\]"):
         raise ContentError("独立公式的 \\[ 与 \\] 分隔符没有成对闭合")
     headings = set(re.findall(r"^##\s+(.+?)\s*$", body, re.MULTILINE))

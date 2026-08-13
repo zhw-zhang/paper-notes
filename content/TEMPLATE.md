@@ -46,15 +46,15 @@ accent_headings: []
 ![方法总览](media/example-paper/method-overview.webp "论文 Figure 2：方法总览。来源：作者论文，CC BY 4.0。")
 ```
 
-行内公式使用 `$x_t = f(x_{t-1})$`。独立公式使用：
+行内公式使用 `$x_t = f(x_{t-1})$`。独立公式默认没有底板：
 
 $$
 \mathcal{L}(\theta) = \mathbb{E}_{x \sim p_{\mathrm{data}}}\left[\ell(f_\theta(x), y)\right]
 $$
 
-如果不需要灰色底板，在起始分隔符后加 `{.plain}`：
+如果某个关键公式需要浅色底板，在起始分隔符后加 `{.boxed}`：
 
-$$ {.plain}
+$$ {.boxed}
 x_t = f(x_{t-1})
 $$
 
