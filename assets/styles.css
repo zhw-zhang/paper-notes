@@ -224,6 +224,9 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .callout { margin: 30px 0; padding: 20px 23px; border-left: 5px solid; border-radius: 0 7px 7px 0; }
 .callout p { margin: 0; color: inherit; }
 .callout-content p + p { margin-top: 9px; }
+.callout-content ul { margin: 0; padding-left: 1.35rem; }
+.callout-content p + ul, .callout-content ul + p { margin-top: 12px; }
+.callout-content li + li { margin-top: 8px; }
 .callout-note { border-color: var(--note-line); background: var(--note-bg); }
 .callout-tip { border-color: var(--tip-line); background: var(--tip-bg); }
 .callout-important { border-color: var(--important-line); background: var(--important-bg); }

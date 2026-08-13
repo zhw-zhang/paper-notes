@@ -67,10 +67,25 @@
   }
 
   function renderCallout(type, lines) {
-    const paragraphs = lines.join("\n").split(/\n\s*\n/).filter((item) => item.trim());
-    const body = paragraphs.length
-      ? paragraphs.map((paragraph) => `<p>${inlineMarkdown(paragraph.trim().replace(/\n+/g, " "))}</p>`).join("")
-      : "";
+    const blocks = lines.join("\n").split(/\n\s*\n/).filter((item) => item.trim());
+    const rendered = [];
+    let listItems = [];
+    const flushList = () => {
+      if (!listItems.length) return;
+      rendered.push(`<ul>${listItems.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`);
+      listItems = [];
+    };
+    blocks.forEach((block) => {
+      const blockLines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      if (blockLines.length && blockLines.every((line) => /^[-*]\s+/.test(line))) {
+        listItems.push(...blockLines.map((line) => line.replace(/^[-*]\s+/, "")));
+        return;
+      }
+      flushList();
+      rendered.push(`<p>${inlineMarkdown(blockLines.join(" "))}</p>`);
+    });
+    flushList();
+    const body = rendered.join("");
     return `<aside class="callout callout-${type.toLowerCase()}" aria-label="${CALLOUT_LABELS[type]}">
       <div class="callout-content">${body}</div>
     </aside>`;
