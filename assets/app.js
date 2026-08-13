@@ -3,6 +3,7 @@
   const state = { query: "", tag: "全部", sort: "newest", activePaper: null };
   const repositoryUrl = "https://github.com/zhw-zhang/paper-notes";
   const fullscreenSessionKey = "paper-notes-fullscreen-paper";
+  const scrollSessionKey = "paper-notes-reader-scroll";
   let lockedScrollY = 0;
   let toastTimer = null;
   let authorMenuCloseTimer = null;
@@ -502,6 +503,28 @@ accent_headings: []
     catch (_error) { return ""; }
   }
 
+  function savedReaderScroll(slug) {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(scrollSessionKey) || "null");
+      return saved?.slug === slug ? Math.max(0, Number(saved.scrollTop) || 0) : 0;
+    } catch (_error) { return 0; }
+  }
+
+  function saveReaderScroll() {
+    if (!state.activePaper || !elements.dialog.open) return;
+    try {
+      sessionStorage.setItem(scrollSessionKey, JSON.stringify({
+        slug: state.activePaper.slug,
+        scrollTop: elements.dialog.scrollTop,
+      }));
+    } catch (_error) {}
+  }
+
+  function clearReaderScroll() {
+    try { sessionStorage.removeItem(scrollSessionKey); }
+    catch (_error) {}
+  }
+
   function setFullscreen(enabled, remember = true) {
     elements.dialog.classList.toggle("reader-fullscreen", enabled);
     elements.fullscreen.textContent = enabled ? "退出全窗口" : "全窗口阅读";
@@ -520,6 +543,7 @@ accent_headings: []
     const paper = data.papers.find((item) => item.slug === slug);
     if (!paper) return;
     const restoreFullscreen = savedFullscreenPaper() === slug;
+    const restoreScrollTop = savedReaderScroll(slug);
     state.activePaper = paper;
     setFullscreen(false, false);
     const rendered = renderMarkdown(paper.body, Array.isArray(paper.accent_headings) ? paper.accent_headings : []);
@@ -543,9 +567,11 @@ accent_headings: []
     renderMath(elements.dialogContent);
     if (!elements.dialog.open) elements.dialog.showModal();
     setFullscreen(restoreFullscreen, false);
-    elements.dialog.scrollTop = 0;
     syncDialogScrollLock();
-    requestAnimationFrame(updateActiveToc);
+    requestAnimationFrame(() => {
+      elements.dialog.scrollTop = restoreScrollTop;
+      updateActiveToc();
+    });
     if (updateHash) history.pushState({ slug }, "", `#paper=${encodeURIComponent(slug)}`);
   }
 
@@ -625,9 +651,13 @@ accent_headings: []
   elements.print.addEventListener("click", printPaper);
   elements.desktopToc.addEventListener("click", scrollToSection);
   elements.mobileTocBody.addEventListener("click", scrollToSection);
-  elements.dialog.addEventListener("scroll", scheduleActiveToc, { passive: true });
+  elements.dialog.addEventListener("scroll", () => {
+    scheduleActiveToc();
+    saveReaderScroll();
+  }, { passive: true });
   elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closePaper(); });
   elements.dialog.addEventListener("close", () => {
+    clearReaderScroll();
     state.activePaper = null;
     tocSectionIds = [];
     activeTocId = "";
