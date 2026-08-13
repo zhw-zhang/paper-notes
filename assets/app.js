@@ -72,7 +72,6 @@
       ? paragraphs.map((paragraph) => `<p>${inlineMarkdown(paragraph.trim().replace(/\n+/g, " "))}</p>`).join("")
       : "";
     return `<aside class="callout callout-${type.toLowerCase()}" aria-label="${CALLOUT_LABELS[type]}">
-      <p class="callout-title">${CALLOUT_LABELS[type]}</p>
       <div class="callout-content">${body}</div>
     </aside>`;
   }
