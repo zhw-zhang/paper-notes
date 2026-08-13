@@ -181,7 +181,7 @@ main { width: min(1480px, calc(100% - 64px)); margin: 0 auto; }
 .status { color: var(--hot); font-weight: 800; }
 .paper-card h3 { max-width: 720px; margin: 36px 0 17px; font-family: var(--serif); font-size: clamp(1.65rem, 2vw, 2.2rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.035em; }
 .authors { margin: 0; color: var(--muted); font-size: 0.78rem; }
-.one-liner { max-width: 710px; margin: 24px 0 32px; color: var(--ink); font-size: 0.9rem; line-height: 1.75; }
+.one-liner { max-width: 710px; margin: 24px 0 32px; overflow: hidden; display: -webkit-box; color: color-mix(in srgb, var(--ink) 88%, var(--muted)); font-size: 0.88rem; line-height: 1.7; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .card-bottom { margin-top: auto; display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; }
 .card-tags { display: flex; gap: 6px 10px; flex-wrap: wrap; }
 .card-tags span { color: var(--muted); font-size: 0.7rem; }
