@@ -5,6 +5,9 @@
   let lockedScrollY = 0;
   let toastTimer = null;
   let authorMenuCloseTimer = null;
+  let tocScrollFrame = null;
+  let tocSectionIds = [];
+  let activeTocId = "";
 
   const elements = {
     grid: document.querySelector("#paper-grid"),
@@ -336,6 +339,52 @@ accent_headings: []
     return toc.map((item) => `<button class="toc-link toc-level-${item.level}" type="button" data-target="${item.id}">${escapeHtml(item.label)}</button>`).join("");
   }
 
+  function setActiveToc(targetId, keepVisible = true) {
+    if (!targetId) return;
+    if (targetId !== activeTocId) {
+      activeTocId = targetId;
+      [...elements.desktopToc.querySelectorAll(".toc-link"), ...elements.mobileTocBody.querySelectorAll(".toc-link")]
+        .forEach((button) => {
+          const active = button.dataset.target === targetId;
+          button.classList.toggle("active", active);
+          if (active) button.setAttribute("aria-current", "location");
+          else button.removeAttribute("aria-current");
+        });
+    }
+
+    if (!keepVisible || !elements.dialog.classList.contains("reader-fullscreen")) return;
+    const activeLink = [...elements.desktopToc.querySelectorAll(".toc-link")]
+      .find((button) => button.dataset.target === targetId);
+    const panel = activeLink?.closest(".desktop-toc-panel");
+    if (!activeLink || !panel) return;
+    const linkRect = activeLink.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    if (linkRect.top < panelRect.top + 14) panel.scrollTop -= panelRect.top + 14 - linkRect.top;
+    else if (linkRect.bottom > panelRect.bottom - 18) panel.scrollTop += linkRect.bottom - panelRect.bottom + 18;
+  }
+
+  function updateActiveToc() {
+    tocScrollFrame = null;
+    if (!elements.dialog.open || !tocSectionIds.length) return;
+    const toolbar = elements.dialog.querySelector(".reader-toolbar");
+    const dialogTop = elements.dialog.getBoundingClientRect().top;
+    const readingLine = dialogTop + (toolbar?.getBoundingClientRect().height || 64) + 74;
+    let currentId = tocSectionIds[0];
+    tocSectionIds.forEach((sectionId) => {
+      const heading = elements.dialogContent.querySelector(`#${sectionId}`);
+      if (heading && heading.getBoundingClientRect().top <= readingLine) currentId = sectionId;
+    });
+    if (elements.dialog.scrollTop + elements.dialog.clientHeight >= elements.dialog.scrollHeight - 8) {
+      currentId = tocSectionIds[tocSectionIds.length - 1];
+    }
+    setActiveToc(currentId);
+  }
+
+  function scheduleActiveToc() {
+    if (tocScrollFrame !== null) return;
+    tocScrollFrame = requestAnimationFrame(updateActiveToc);
+  }
+
   function syncDialogScrollLock() {
     const root = document.documentElement;
     const body = document.body;
@@ -451,6 +500,7 @@ accent_headings: []
     elements.fullscreen.textContent = enabled ? "退出全窗口" : "全窗口阅读";
     elements.fullscreen.setAttribute("aria-pressed", String(enabled));
     elements.mobileToc.open = false;
+    scheduleActiveToc();
   }
 
   function openPaper(slug, updateHash = true) {
@@ -467,6 +517,8 @@ accent_headings: []
       <div class="detail-body">${rendered.html}</div>
       ${rightsMarkup(paper)}`;
     const toc = tocMarkup(rendered.toc);
+    tocSectionIds = rendered.toc.map((item) => item.id);
+    activeTocId = "";
     elements.desktopToc.innerHTML = toc;
     elements.mobileTocBody.innerHTML = toc;
     elements.downloadMarkdown.href = `notes/${encodeURIComponent(paper.source_file)}`;
@@ -478,6 +530,7 @@ accent_headings: []
     if (!elements.dialog.open) elements.dialog.showModal();
     elements.dialog.scrollTop = 0;
     syncDialogScrollLock();
+    requestAnimationFrame(updateActiveToc);
     if (updateHash) history.pushState({ slug }, "", `#paper=${encodeURIComponent(slug)}`);
   }
 
@@ -505,7 +558,11 @@ accent_headings: []
     const button = event.target.closest("[data-target]");
     if (!button) return;
     const target = elements.dialogContent.querySelector(`#${button.dataset.target}`);
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (target) {
+      setActiveToc(button.dataset.target, false);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      scheduleActiveToc();
+    }
     elements.mobileToc.open = false;
   }
 
@@ -551,9 +608,14 @@ accent_headings: []
   elements.print.addEventListener("click", printPaper);
   elements.desktopToc.addEventListener("click", scrollToSection);
   elements.mobileTocBody.addEventListener("click", scrollToSection);
+  elements.dialog.addEventListener("scroll", scheduleActiveToc, { passive: true });
   elements.dialog.addEventListener("click", (event) => { if (event.target === elements.dialog) closePaper(); });
   elements.dialog.addEventListener("close", () => {
     state.activePaper = null;
+    tocSectionIds = [];
+    activeTocId = "";
+    if (tocScrollFrame !== null) cancelAnimationFrame(tocScrollFrame);
+    tocScrollFrame = null;
     setFullscreen(false);
     syncDialogScrollLock();
     if (location.hash.startsWith("#paper=")) history.pushState({}, "", location.pathname + location.search);

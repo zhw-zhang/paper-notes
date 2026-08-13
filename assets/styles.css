@@ -11,6 +11,9 @@
   --grid: rgba(96, 70, 215, 0.024);
   --accent: #6553cb;
   --accent-2: #d9fa62;
+  --summary-bg: #e3e6d1;
+  --summary-line: #78815d;
+  --summary-ink: #293022;
   --selection: #4a352d;
   --selection-ink: #fff9f0;
   --hot: #e26349;
@@ -44,6 +47,9 @@
   --grid: rgba(168, 149, 255, 0.055);
   --accent: #a895ff;
   --accent-2: #c9f25b;
+  --summary-bg: #283025;
+  --summary-line: #8c9870;
+  --summary-ink: #edf1e7;
   --selection: #c9f25b;
   --selection-ink: #172033;
   --hot: #ff8063;
@@ -198,7 +204,7 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .detail-kicker { margin: 0 0 20px; color: var(--accent); font-family: var(--mono); font-size: 0.7rem; font-weight: 850; letter-spacing: 0.12em; }
 .paper-detail > #dialog-content > h1 { max-width: 760px; margin: 0 0 24px; font-family: var(--serif); font-size: clamp(2.55rem, 4.6vw, 4rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.045em; }
 .detail-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; padding-bottom: 30px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 0.76rem; }
-.detail-summary { margin: 38px 0 52px; padding: 23px 26px; border: 0; background: var(--accent-2); color: #172033; font-family: var(--serif); font-size: 1.15rem; font-weight: 650; line-height: 1.75; }
+.detail-summary { margin: 38px 0 52px; padding: 23px 26px; border: 0; border-left: 4px solid var(--summary-line); background: var(--summary-bg); color: var(--summary-ink); font-family: var(--serif); font-size: 1.15rem; font-weight: 650; line-height: 1.75; }
 .detail-body h2 { scroll-margin-top: 86px; margin: 58px 0 18px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--serif); font-size: 1.8rem; font-weight: 650; letter-spacing: -0.025em; }
 .detail-body h2.section-accent { min-height: 32px; padding: 0 0 0 22px; position: relative; display: flex; align-items: center; border-top: 0; }
 .detail-body h2.section-accent::before { width: 5px; height: 30px; position: absolute; left: 0; top: 50%; border-radius: 4px; background: var(--accent); transform: translateY(-50%); content: ""; }
@@ -240,9 +246,10 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .mobile-toc { margin: 0 0 38px; border: 1px solid var(--soft-line); border-radius: 4px; background: var(--soft-panel); }
 .mobile-toc summary { padding: 11px 13px; cursor: pointer; color: var(--muted); font-size: 0.73rem; font-weight: 700; }
 .mobile-toc nav { padding: 0 11px 11px; }
-.toc-link { width: 100%; padding: 6px 4px; display: block; border: 0; color: var(--muted); background: transparent; font-size: 0.75rem; line-height: 1.4; text-align: left; }
+.toc-link { width: 100%; padding: 7px 8px 7px 10px; display: block; border: 0; border-left: 3px solid transparent; color: var(--muted); background: transparent; font-size: 0.75rem; line-height: 1.4; text-align: left; transition: color 140ms ease, border-color 140ms ease, background 140ms ease; }
 .toc-link:hover { color: var(--accent); }
-.toc-level-3 { padding-left: 15px; font-size: 0.68rem; }
+.toc-link.active { color: var(--ink); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); font-weight: 750; }
+.toc-level-3 { padding-left: 22px; font-size: 0.68rem; }
 
 .rights-line { margin: 70px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.7rem; line-height: 1.7; }
 .rights-line a { color: var(--accent); text-underline-offset: 3px; }
@@ -310,7 +317,7 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
   #paper-dialog::backdrop, .reader-toolbar, .desktop-toc-panel, .mobile-toc, .reader-toast { display: none !important; }
   .reader-shell { display: block !important; }
   .paper-detail { width: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; color: #111 !important; }
-  .detail-summary { color: #111 !important; background: #eef2c8 !important; }
+  .detail-summary { color: #1f261a !important; border-left-color: #78815d !important; background: #eef0e5 !important; }
   .detail-body p, .detail-body li, .rights-line { color: #111 !important; }
   .detail-body h2, .rights-line, .paper-figure, .callout { break-inside: avoid; }
   a { color: #111 !important; text-decoration: none; }
