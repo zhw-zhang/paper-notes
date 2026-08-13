@@ -58,6 +58,18 @@
     return `<a${className ? ` class="${className}"` : ""} href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(label)} ↗</a>`;
   }
 
+  function readingMinutes(markdown = "") {
+    const plainText = String(markdown)
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/[#>*_`~$\\{}\[\]()|:-]/g, " ");
+    const chineseCharacters = (plainText.match(/[\u3400-\u9fff]/g) || []).length;
+    const latinWords = (plainText.match(/[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*/g) || []).length;
+    return Math.max(1, Math.ceil(chineseCharacters / 350 + latinWords / 220));
+  }
+
   function inlineMarkdown(text) {
     return escapeHtml(text)
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
@@ -468,9 +480,10 @@ accent_headings: []
     const tags = paper.tags.slice(0, 3).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
     const authorNames = paper.authors.split(",").map((name) => name.trim()).filter(Boolean);
     const cardAuthors = authorNames.length > 2 ? `${authorNames[0]} et al.` : paper.authors;
+    const minutes = readingMinutes(paper.body);
     return `<article class="paper-card">
       <button class="card-button" type="button" data-slug="${escapeHtml(paper.slug)}" aria-label="打开《${escapeHtml(paper.title)}》详情">
-        <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span>${formatDate(paper.read_date)}</span></div>
+        <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span class="card-top-meta"><span>约 ${minutes} 分钟</span><span aria-hidden="true">·</span><span>${formatDate(paper.read_date)}</span></span></div>
         <h3>${escapeHtml(paper.title)}</h3>
         <p class="authors">${escapeHtml(cardAuthors)}${paper.venue ? ` · ${escapeHtml(paper.venue)}` : ""}</p>
         <p class="one-liner">${escapeHtml(paper.one_liner)}</p>
@@ -558,13 +571,14 @@ accent_headings: []
     if (!paper) return;
     const restoreFullscreen = savedFullscreenPaper() === slug;
     const restoreScrollTop = savedReaderScroll(slug);
+    const minutes = readingMinutes(paper.body);
     state.activePaper = paper;
     setFullscreen(false, false);
     const rendered = renderMarkdown(paper.body, Array.isArray(paper.accent_headings) ? paper.accent_headings : []);
     elements.dialogContent.innerHTML = `
       <p class="detail-kicker">${escapeHtml(paper.status)} · ${formatDate(paper.read_date)}</p>
       <h1 id="dialog-title">${escapeHtml(paper.title)}</h1>
-      <div class="detail-meta"><span>${escapeHtml(paper.authors)}</span><span>${escapeHtml(paper.venue)}</span><span>${escapeHtml(paper.published)}</span></div>
+      <div class="detail-meta"><span>${escapeHtml(paper.authors)}</span><span>${escapeHtml(paper.venue)}</span><span>${escapeHtml(paper.published)}</span><span class="reading-time">约 ${minutes} 分钟阅读</span></div>
       <p class="detail-summary">“${escapeHtml(paper.one_liner)}”</p>
       <div class="detail-body">${rendered.html}</div>
       ${rightsMarkup(paper)}`;
