@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-12"
 read_at: "2026-08-12T22:55:00+08:00"
 created_at: "2026-08-12T22:55:00+08:00"
-updated_at: "2026-08-14T01:37:58+08:00"
+updated_at: "2026-08-14T01:43:50+08:00"
 status: "使用指南"
 tags: ["Tutorial",]
 one_liner: "这是一篇可以边看边抄的样式手册：用同一页学习新建、标签、短色条标题、五种提示块、两种公式、分享链接、Markdown 与 PDF。"
@@ -49,7 +49,7 @@ mkdir -p content/private
 cp content/TEMPLATE.md content/private/2026-08-12-my-first-paper.md
 ```
 
-文件名使用“阅读日期 + 简短英文 slug”。打开新文件后，至少修改标题、论文链接、作者、标签、one-liner、许可和正文七个章节。
+文件名使用“阅读日期 + 简短英文 slug”。打开新文件后，至少修改标题、论文链接、作者、标签、one-liner 和许可。模板里的七个正文章节只是推荐结构：不适合这篇笔记的标题可以直接删除，缺少章节不会阻止本地预览或公开构建。
 
 如果是已经准备公开的笔记，也可以直接把模板复制到 `content/papers/`，并把 `sharing` 设为 `"public"`。不确定时默认放入 `content/private/`。
 

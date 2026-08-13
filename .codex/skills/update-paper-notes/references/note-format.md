@@ -24,13 +24,13 @@ Required fields:
 - `note_license`: `All Rights Reserved` by default.
 - `note_source_url`: public GitHub URL of the note once published.
 - `sharing`: `private` in `content/private/`; `public` in `content/papers/` only after explicit publication approval and all checks pass.
-- `accent_headings` (optional): a list of exact H2 labels that should use the short colored bar style, for example `["核心方法", "我的判断"]`.
+- `accent_headings` (optional): a list of H2 labels that should use the short colored bar style, for example `["核心方法", "我的判断"]`. Labels absent from the current body are simply ignored.
 
 Quote all string values, keep one `key: value` per line, and avoid multiline metadata.
 
-## Required sections
+## Suggested sections
 
-Use these headings verbatim and in order:
+The template offers these headings as a useful default structure:
 
 1. `## 研究问题`
 2. `## 核心方法`
@@ -40,7 +40,7 @@ Use these headings verbatim and in order:
 6. `## 我的判断`
 7. `## 下次只看这些`
 
-Avoid an H1 in the body, pasted abstracts, or long chat transcripts.
+Every section is optional. Keep only the headings that help the current note; missing sections must not block validation, preview, or publication. Avoid an H1 in the body, pasted abstracts, or long chat transcripts.
 
 ## Mathematics and callouts
 

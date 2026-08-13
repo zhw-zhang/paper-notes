@@ -32,10 +32,6 @@ REQUIRED_FIELDS = {
     "status", "tags", "one_liner", "paper_license", "paper_license_url",
     "note_author", "note_license", "note_source_url", "sharing",
 }
-REQUIRED_SECTIONS = (
-    "研究问题", "核心方法", "关键发现", "我的提问",
-    "局限与疑问", "我的判断", "下次只看这些",
-)
 ALLOWED_SHARING = {"private", "public"}
 ALLOWED_CALLOUTS = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
 
@@ -190,15 +186,6 @@ def parse_note(path: Path) -> dict:
             raise ContentError(f"不支持公式样式 {math_style!r}；当前支持 boxed（plain 仅为旧笔记兼容）")
     if body.count("\\[") != body.count("\\]"):
         raise ContentError("独立公式的 \\[ 与 \\] 分隔符没有成对闭合")
-    headings = set(re.findall(r"^##\s+(.+?)\s*$", body, re.MULTILINE))
-    missing_sections = [section for section in REQUIRED_SECTIONS if section not in headings]
-    if missing_sections:
-        raise ContentError(f"缺少章节：{', '.join(missing_sections)}")
-    unknown_accent_headings = [heading for heading in accent_headings if heading not in headings]
-    if unknown_accent_headings:
-        raise ContentError(
-            "accent_headings 中的标题未出现在正文：" + ", ".join(unknown_accent_headings)
-        )
     validate_callouts(body)
     images = validate_images(body, slug)
 
