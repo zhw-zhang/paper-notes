@@ -2,6 +2,7 @@
   const data = window.PAPER_NOTES_DATA || { generated_at: "", build_mode: "public", papers: [] };
   const state = { query: "", tag: "全部", sort: "newest", activePaper: null };
   const repositoryUrl = "https://github.com/zhw-zhang/paper-notes";
+  const fullscreenSessionKey = "paper-notes-fullscreen-paper";
   let lockedScrollY = 0;
   let toastTimer = null;
   let authorMenuCloseTimer = null;
@@ -19,6 +20,7 @@
     dialog: document.querySelector("#paper-dialog"),
     dialogContent: document.querySelector("#dialog-content"),
     fullscreen: document.querySelector("#reader-fullscreen"),
+    readerTheme: document.querySelector("#reader-theme-toggle"),
     copyLink: document.querySelector("#reader-copy-link"),
     copyCitation: document.querySelector("#reader-copy-citation"),
     downloadMarkdown: document.querySelector("#reader-download-markdown"),
@@ -495,19 +497,31 @@ accent_headings: []
     showToast(successMessage);
   }
 
-  function setFullscreen(enabled) {
+  function savedFullscreenPaper() {
+    try { return sessionStorage.getItem(fullscreenSessionKey) || ""; }
+    catch (_error) { return ""; }
+  }
+
+  function setFullscreen(enabled, remember = true) {
     elements.dialog.classList.toggle("reader-fullscreen", enabled);
     elements.fullscreen.textContent = enabled ? "退出全窗口" : "全窗口阅读";
     elements.fullscreen.setAttribute("aria-pressed", String(enabled));
     elements.mobileToc.open = false;
+    if (remember) {
+      try {
+        if (enabled && state.activePaper) sessionStorage.setItem(fullscreenSessionKey, state.activePaper.slug);
+        else sessionStorage.removeItem(fullscreenSessionKey);
+      } catch (_error) {}
+    }
     scheduleActiveToc();
   }
 
   function openPaper(slug, updateHash = true) {
     const paper = data.papers.find((item) => item.slug === slug);
     if (!paper) return;
+    const restoreFullscreen = savedFullscreenPaper() === slug;
     state.activePaper = paper;
-    setFullscreen(false);
+    setFullscreen(false, false);
     const rendered = renderMarkdown(paper.body, Array.isArray(paper.accent_headings) ? paper.accent_headings : []);
     elements.dialogContent.innerHTML = `
       <p class="detail-kicker">${escapeHtml(paper.status)} · ${formatDate(paper.read_date)}</p>
@@ -528,6 +542,7 @@ accent_headings: []
     elements.editNote.href = editUrl || "#";
     renderMath(elements.dialogContent);
     if (!elements.dialog.open) elements.dialog.showModal();
+    setFullscreen(restoreFullscreen, false);
     elements.dialog.scrollTop = 0;
     syncDialogScrollLock();
     requestAnimationFrame(updateActiveToc);
@@ -587,11 +602,13 @@ accent_headings: []
     const saved = localStorage.getItem("paper-notes-theme") || localStorage.getItem("paper-recap-theme");
     const preferred = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     document.documentElement.dataset.theme = saved || preferred;
-    document.querySelector("#theme-toggle").addEventListener("click", () => {
+    const toggleTheme = () => {
       const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = next;
       localStorage.setItem("paper-notes-theme", next);
-    });
+    };
+    document.querySelector("#theme-toggle").addEventListener("click", toggleTheme);
+    elements.readerTheme.addEventListener("click", toggleTheme);
   }
 
   elements.search.addEventListener("input", (event) => { state.query = event.target.value; renderPapers(); });
