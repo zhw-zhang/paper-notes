@@ -145,7 +145,7 @@ main { width: min(1480px, calc(100% - 64px)); margin: 0 auto; }
 }
 .hero-quote { margin: 0; grid-column: 1 / -1; display: flex; gap: 14px; align-items: baseline; justify-self: center; color: var(--muted); font-family: var(--script); font-size: clamp(1.22rem, 1.45vw, 1.5rem); font-weight: 500; line-height: 1.5; letter-spacing: 0.08em; opacity: 0.78; }
 .hero-quote p { margin: 0; }
-.hero-quote cite { font-family: var(--script); font-size: 0.82rem; font-style: normal; letter-spacing: 0.08em; white-space: nowrap; }
+.hero-quote cite { font-family: var(--script); font-size: clamp(1rem, 1.05vw, 1.12rem); font-style: normal; letter-spacing: 0.1em; white-space: nowrap; }
 .eyebrow, .section-index, .toc-label { margin: 0; color: var(--accent); font-family: var(--mono); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.16em; }
 .hero h1 { margin: 18px 0 14px; font-family: var(--serif); font-size: clamp(3.55rem, 6.2vw, 5.6rem); font-weight: 650; line-height: 0.98; letter-spacing: -0.055em; }
 .hero-copy { max-width: 600px; margin: 0; color: var(--muted); font-size: clamp(1rem, 1.25vw, 1.14rem); }
