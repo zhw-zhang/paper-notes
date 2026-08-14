@@ -182,9 +182,9 @@ main { width: min(1480px, calc(100% - 64px)); margin: 0 auto; }
 .paper-card h3 { max-width: 720px; min-height: 3.3em; margin: 36px 0 17px; font-family: var(--serif); font-size: clamp(1.65rem, 2vw, 2.2rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.035em; }
 .authors { margin: 0; overflow: hidden; color: var(--muted); font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
 .one-liner { max-width: 710px; margin: 24px 0 32px; overflow: hidden; display: -webkit-box; color: color-mix(in srgb, var(--ink) 88%, var(--muted)); font-size: 0.88rem; line-height: 1.7; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.card-bottom { margin-top: auto; display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; }
-.card-tags { display: flex; gap: 6px 10px; flex-wrap: wrap; }
-.card-tags span { color: var(--muted); font-size: 0.7rem; }
+.card-bottom { margin-top: auto; display: flex; gap: 20px; align-items: center; justify-content: space-between; }
+.card-tags { min-width: 0; height: 1.1rem; overflow: hidden; display: flex; gap: 6px 10px; flex-wrap: wrap; align-content: flex-start; }
+.card-tags span { flex: 0 0 auto; color: var(--muted); font-size: 0.7rem; line-height: 1.1rem; white-space: nowrap; }
 .arrow { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: 1.25rem; transition: 150ms ease; }
 .empty-state { padding: 90px 20px; border: 1px solid var(--line); text-align: center; }
 .empty-state span { color: var(--accent); font-size: 3rem; }
