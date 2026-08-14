@@ -72,6 +72,7 @@
 
   function inlineMarkdown(text) {
     return escapeHtml(text)
+      .replace(/\+\+(.+?)\+\+/g, "<u>$1</u>")
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
       .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -114,6 +115,11 @@
     let codeLanguage = "";
     let headingIndex = 0;
     const closeList = () => { if (listType) output.push(`</${listType}>`); listType = null; };
+    const parseTableRow = (value) => value.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+    const isTableDivider = (value) => {
+      const cells = parseTableRow(value);
+      return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+    };
 
     for (let index = 0; index < lines.length; index += 1) {
       const raw = lines[index];
@@ -183,6 +189,27 @@
           </button>
           ${caption ? `<figcaption>${inlineMarkdown(caption)}</figcaption>` : ""}
         </figure>`);
+        continue;
+      }
+
+      if (line.includes("|") && index + 1 < lines.length && isTableDivider(lines[index + 1])) {
+        closeList();
+        const headers = parseTableRow(line);
+        const alignments = parseTableRow(lines[index + 1]).map((cell) => {
+          if (cell.startsWith(":") && cell.endsWith(":")) return "center";
+          if (cell.endsWith(":")) return "right";
+          return "left";
+        });
+        const rows = [];
+        index += 2;
+        while (index < lines.length && lines[index].trim().includes("|")) {
+          rows.push(parseTableRow(lines[index]));
+          index += 1;
+        }
+        index -= 1;
+        const headerHtml = headers.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join("");
+        const bodyHtml = rows.map((row) => `<tr>${headers.map((_, cellIndex) => `<td style="text-align:${alignments[cellIndex] || "left"}">${inlineMarkdown(row[cellIndex] || "")}</td>`).join("")}</tr>`).join("");
+        output.push(`<div class="table-scroll"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`);
         continue;
       }
 
