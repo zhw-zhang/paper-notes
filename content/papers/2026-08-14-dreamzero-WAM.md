@@ -9,7 +9,7 @@ read_at: "2026-08-14T13:45:42+08:00"
 created_at: "2026-08-14T13:45:42+08:00"
 updated_at: "2026-08-14T21:30:06+08:00"
 status: "已精读"
-tags: ["World Models", "Video Generation", "Robotics"]
+tags: ["World Action Models", "Video Generation", "Robotics"]
 one_liner: "DreamZero 是使用 video diffusion backbone 的 WAM。和 VLA 不同，WAM 将 VDM 中学到的 world-evolution knowledge 作为 prior，通过共同预测 future world states and actions 学习物理动态，同时学习建立 world transition 和 robot action 的对应关系，因此拥有强大的任务学习和知识 transfer 能力。"
 paper_license: "CC BY 4.0"
 paper_license_url: "https://creativecommons.org/licenses/by/4.0/"
