@@ -1,5 +1,5 @@
 ---
-title: "World Action Models are Zero-shot Policies"
+title: "DreamZero：World Action Models are Zero-shot Policies"
 paper_url: "https://arxiv.org/abs/2602.15922"
 authors: "Seonghyeon Ye et al."
 venue: "arXiv"
