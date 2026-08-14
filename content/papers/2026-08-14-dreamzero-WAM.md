@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-14"
 read_at: "2026-08-14T13:45:42+08:00"
 created_at: "2026-08-14T13:45:42+08:00"
-updated_at: "2026-08-14T21:30:06+08:00"
+updated_at: "2026-08-15T00:14:10+08:00"
 status: "已精读"
 tags: ["World Action Models", "Video Generation", "Robotics"]
 one_liner: "DreamZero 是使用 video diffusion backbone 的 WAM。和 VLA 不同，WAM 将 VDM 中学到的 world-evolution knowledge 作为 prior，通过共同预测 future world states and actions 学习物理动态，同时学习建立 world transition 和 robot action 的对应关系，因此拥有强大的任务学习和知识 transfer 能力。"
@@ -142,12 +142,12 @@ $$
 
 ## 局限与疑问
 
-1. 速度方面还是有很大问题，难道一定要把video predict出来吗？有些变体增加速度，但是都是不掉点的吗？
+### 1. 速度方面还是有很大问题，难道一定要把video predict出来吗？有些变体增加速度，但是都是不掉点的吗？
 
 - DreamZero：把 Joint-WAM scale 到 foundation policy。
 - Fast-WAM：质疑 test-time future imagination 是否必要。
 - Faster-WAM：发现完全砍 future 会伤 OOD，于是保留 one-pass latent future conditioning。
-需要注意的是：Fast-WAM和Faster-WAM 延续了 DreamZero 这类 Joint-WAM 的思想，但作者自己重新搭了一套受控实验框架，backbone 用的是 Wan2.2-5B
+需要注意的是：Fast-WAM和Faster-WAM 延续了 DreamZero 这类 Joint-WAM 的思想，但作者自己重新搭了一套受控实验框架，backbone 用的是 Wan2.2-5B，因此没办法和DreamZero-14B直接比较绝对的谁好谁坏。
 
 | 方法 | 推理时 future | 速度 | 普通 ID benchmark | OOD shift |
 | --- | --- | :---: | :---: | :---: |
@@ -155,7 +155,7 @@ $$
 | **Fast-WAM** | 完全去掉 future slots，只看 current representation | 快很多 | 基本不掉 | 明显掉 |
 | **Faster-WAM** | 保留 future-aware latent/context，但只算一次，不 rollout 到 RGB | 比 Joint 快很多 | 更强 | 显著恢复，甚至超过 Joint |
 
-### 从 16-step 到 4-step、1-step：损失在哪里？
+### 2.1 DreamZero 和 DreamZero-flash 从 16-step 到 4-step、1-step：应该有很大损失的吧？这种直接硬拉到few-steps的肯定有问题？
 
 DreamZero 原始推理使用 Flow UniPC scheduler；为了得到平滑动作，基线需要 16 个 denoising steps。
 普通 DreamZero 继续从 4-step 硬降到 1-step 时，任务进度从 83% 降至 52%，说明直接减少采样步数确实有明显损失。DreamZero-Flash 通过解耦 video 与 action 的噪声日程，让模型在训练时就学会“从仍然很吵的 future video 中预测干净 action”，最终把 1-step 恢复到 74%。
@@ -194,15 +194,20 @@ $$
 2. **4-step sampling：真的只运行 4 个 denoising steps。** Table 3 中 DreamZero 4-step 的 83% 指的是这种设置，不是 DiT Cache 的“约 4 次 forward”。
 
 
-### 为什么不用 DMD？
+### 2.2 为什么不用 DMD？
 
-论文没有讨论 DMD，也没有提供相关对比，因此不能从现有证据得出“DMD 更好”或“DMD 不适用”的结论。
+DMD在image和video领域能做到50-steps蒸馏到4-steps且几乎没有太大损失，获得了很好的效果。但是在这里，本论文没有讨论 DMD，也没有提供相关对比，因此不能从现有证据得出“DMD 更好”或“DMD 不适用”的结论。
 
-但是DreamZero-Flash 的 1-step 虽然约快 2.3 倍，但 74%的准确率算是掉的很多的了，原先强行拉到1-steps更差，这还是finetune之后的了。我估计使用DMD应该会更好，但是有个concern是joint predict尤其是token数量不公平情况下优化会有点问题，比如video-audio，现在DMD没做的太好，例如：ominiforcing这种做了简单尝试
+但是DreamZero-Flash 的 1-step 虽然约快 2.3 倍，但 74%的准确率算是掉的很多的了，原先强行拉到1-steps更差，这还是finetune之后的了。我估计使用DMD应该会更好，但是有个concern是joint predict尤其是token数量不公平情况下优化会有点问题，比如video-audio这种联合优化的DMD没做的太好，例如：ominiforcing这种做了简单尝试。
 
 ## 我的判断
 
-这篇论文还是个很好的baseline，证明了joint predict的WAM的优势，大大提升了模型的泛化性。但是后续优化可能是速度、AR推理的优化还需要提升。
+这篇论文还是个很好的baseline，证明了WAM借助VDM prior jointly predict action的优势，不是用大量数据学习一个任务，而是借助video prior，训练VDM掌握的知识和action之间的联系，学到了这样的能力就有很强的transfer特性，大大提升了模型的泛化性。
+
+这样的formulation方式确实很合理，而且容易scaling，随着VDM效果越来越好(model size和data的scaling)，WAM的效果也可以随之scaling。
+
+但是后续优化可能是速度、AR推理的优化还需要提升。
+
 
 ## 下次只看这些
 
