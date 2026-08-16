@@ -9,7 +9,7 @@ read_at: "2026-08-13T23:06:18+08:00"
 created_at: "2026-08-12T23:06:18+08:00"
 updated_at: "2026-08-14T01:22:00+08:00"
 status: "已精读"
-tags: ["Attention", "Long Context", "Linear Attention", "Memory", "Video Generation"]
+tags: ["Summary", "Long Context", "Linear Attention", "Memory", "Video Generation"]
 one_liner: "面对超长上下文，Sparse Attention 精确保留少数 top-K 尖峰，Linear Attention 低成本覆盖大面积长尾，各有优劣，更好的答案是让二者分工结合。另外，Kimi-k3更是给出了另一份不同的答案，KDA+MLA的结合，丢掉了RoPE使得模型架构除了效率高之外，甚至还具有zero-shot外推能力。之后，Adobe的Chimera也进一步在video generation上验证了KDA+MLA这一套框架的优势。"
 paper_license: "博客未明确标注开放许可；相关论文许可见各自官方页面"
 paper_license_url: ""
