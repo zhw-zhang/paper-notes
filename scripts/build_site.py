@@ -23,7 +23,7 @@ DIST_DIR = ROOT / "dist"
 PUBLIC_DIST_DIR = ROOT / "dist-public"
 MAX_MEDIA_BYTES = 2 * 1024 * 1024
 IMAGE_PATTERN = re.compile(
-    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)\s*$',
+    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)(?:\{\.(narrow)\})?\s*$',
     re.IGNORECASE | re.MULTILINE,
 )
 REQUIRED_FIELDS = {
@@ -65,7 +65,7 @@ def validate_images(body: str, slug: str) -> list[dict]:
     expected_prefix = f"media/{slug}/"
     images = []
     for match in matches:
-        alt_text, relative_path, caption = match.groups()
+        alt_text, relative_path, caption, _figure_style = match.groups()
         if not alt_text.strip():
             raise ContentError("图片必须包含非空替代文本")
         if not caption or not caption.strip():

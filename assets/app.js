@@ -104,6 +104,15 @@
     </aside>`;
   }
 
+  function renderBlockquote(quoteLines) {
+    const blocks = quoteLines.join("\n").split(/\n\s*\n/).filter((item) => item.trim());
+    const html = blocks.map((block) => {
+      const text = block.split("\n").map((part) => part.trim()).filter(Boolean).join(" ");
+      return `<p>${inlineMarkdown(text)}</p>`;
+    }).join("");
+    return `<blockquote>${html}</blockquote>`;
+  }
+
   function renderMarkdown(markdown = "", accentHeadings = []) {
     const lines = markdown.replace(/\r/g, "").split("\n");
     const output = [];
@@ -177,13 +186,14 @@
         continue;
       }
 
-      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)$/i);
+      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)(?:\{\.(narrow)\})?$/i);
       if (image) {
         closeList();
         const altText = image[1];
         const imagePath = image[2];
         const caption = image[3] || "";
-        output.push(`<figure class="paper-figure">
+        const figureClass = image[4] === "narrow" ? "paper-figure paper-figure-narrow" : "paper-figure";
+        output.push(`<figure class="${figureClass}">
           <button class="paper-image-button" type="button" data-image-src="${escapeHtml(imagePath)}" data-image-alt="${escapeHtml(altText)}" data-image-caption="${escapeHtml(caption)}" aria-label="放大查看：${escapeHtml(altText)}">
             <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" />
           </button>
@@ -239,8 +249,16 @@
       }
 
       closeList();
-      if (line.startsWith("> ")) output.push(`<blockquote>${inlineMarkdown(line.slice(2))}</blockquote>`);
-      else output.push(`<p>${inlineMarkdown(line)}</p>`);
+      if (line.startsWith(">")) {
+        const quoteLines = [line.replace(/^>\s?/, "")];
+        while (index + 1 < lines.length && lines[index + 1].trim().startsWith(">")) {
+          index += 1;
+          quoteLines.push(lines[index].trim().replace(/^>\s?/, ""));
+        }
+        output.push(renderBlockquote(quoteLines));
+        continue;
+      }
+      output.push(`<p>${inlineMarkdown(line)}</p>`);
     }
     if (codeBlock !== null) output.push(`<pre class="math-error">${escapeHtml(codeBlock.join("\n"))}</pre>`);
     if (displayMath !== null) output.push(`<pre class="math-error">${escapeHtml(displayMath.join("\n"))}</pre>`);

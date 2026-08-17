@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-14"
 read_at: "2026-08-14T13:45:42+08:00"
 created_at: "2026-08-14T13:45:42+08:00"
-updated_at: "2026-08-15T00:14:10+08:00"
+updated_at: "2026-08-17T11:49:00+08:00"
 status: "已精读"
 tags: ["World Action Models", "Video Generation", "Robotics"]
 one_liner: "DreamZero 是使用 video diffusion backbone 的 WAM。和 VLA 不同，WAM 将 VDM 中学到的 world-evolution knowledge 作为 prior，通过共同预测 future world states and actions 学习物理动态，同时学习建立 world transition 和 robot action 的对应关系，因此拥有强大的任务学习和知识 transfer 能力。"
@@ -37,21 +37,30 @@ accent_headings: ["核心方法", "关键发现"]
 
 ## 核心方法
 
-### 从 VLA 到 WAM
+### Why robots need WAMs, compared with VLAs? 从 VLA 到 WAM
 
-VLA 使用 VLM backbone，虽然有很强的 semantic generalization 能力，却在 unseen environments 和 unseen physical motions 上泛化能力很差。
+**1. Motivation：**
+VLA 使用 VLM backbone，虽然有很强的 semantic generalization 能力，却在 unseen environments 和 unseen physical motions 上泛化能力很差。（因为更多image-text pair训练的）
 
-DreamZero 是 WAM，使用 video diffusion backbone。和 VLA 不同，WAM 将 VDM 中学习到的 **world-evolution knowledge** 作为 prior，通过共同预测 future world states and actions 的方式学习物理动态，++更重要的是学习建立 world transition 和 robot action 的对应关系++。
+DreamZero 是 WAM，使用 video diffusion backbone。不同于Latent world model或VLA train-from-scratch，WAM 更希望利用 VDM 从 large-scale data 里学到的physical dynamic作为prior（world evolution / world modeling）。
 
-DreamZero 把 VDM 的 knowledge 作为 prior 的好处是：模型可以在大量数据上学习 diverse skills，而不需要依赖大量重复的演示去硬记住具体任务（对比 VLA）。
+**2. 具体做法**
+不同于早期 WAM先做 video prediction，再用 IDM 从预测视频里得到 action的方式。DreamZero 则 jointly predict video 和 action，++让模型学习建立 world transition 和 robot action 的对应关系，使得video prediction 成为 action 的隐式视觉推理器++。
+
+**3. 好处**
+这种 formulation 有两层：一是把提升 robot 能力进一步归结为提升 VDM；二是出现当前 VLA 不具备的三种特性：
+
+- **zero-shot generalization** to novel tasks or new scenes
+- **effective learning diverse skills from heterogeneous robot data, instead of repetitive demonstrate data**（对于VLA，只学习绑定两者的联系即可）
+- **extremely efficient cross-embodiment transfer from videos**（两种跨具身迁移）
 
 
-### 两种知识迁移
+### 两种cross-embodiment transfer
 
-同时还有以下几个实验观察的收益。DreamZero 有着强大的任务学习能力和知识 transfer 能力：
+DreamZero 有着强大的任务学习能力和知识 transfer 能力：
 
 - **特定 task transfer：**人类或其他机器人的 video-only demonstration，只需 **10–20 min video** 就可以在 unseen task 上获得超过 **42%** 的相对提升。
-- **不同 embodiment transfer：**让整个 DreamZero 适配一台没见过的新机器人，只需要新机器人 YAM 自己的 **30 min play data**，仍保留 zero-shot task generalization。
+- **不同 embodiment transfer：**让整个 DreamZero 适配一台没见过的新机器人，只需要新机器人 YAM 自己的 **30 min play data**，finetune后仍保留 zero-shot task generalization。
 
 
 ### 六个评估维度
@@ -66,9 +75,29 @@ DreamZero 把 VDM 的 knowledge 作为 prior 的好处是：模型可以在大�
 6. **Real-Time Inference**：模型和系统优化带来 38× speedup，支持 7Hz closed-loop control.
 
 
+### 关键技术
+**1. Jointly predict & AR attention struture**
+
+![DreamZero 训练与推理 attention mask](media/dreamzero-WAM/attention-mask.png "图 2｜论文 Figure 14：DreamZero 的 attention strategy。(a) 训练时的 QKV self-attention mask：纵轴为 Query，横轴为 Key/Value。给定 conditioning frames（C0, C1, C2），模型预测下一帧 velocity（Z1, Z2, Z3）和 action（Y1, Y2, Y3）。(b) 推理时先计算条件帧的 KV-cache，再拼接上去预测 action 与 frames。例如 Y3 可以 attend 到 C0, C1, C2，把先前视觉观测当作历史。推理时 C0, C1, C2 会替换成 GT observations。来源：Ye et al., World Action Models are Zero-shot Policies，https://arxiv.org/abs/2602.15922 ；许可：CC BY 4.0。"){.narrow}
+
+
+**2. Real-time inference**
+这里面包括很多不同的技术，作者提到说predict video的tokek不是主要的inference瓶颈，最重要的在于diffusion steps和DiT model blocks number是主要的约束。
+
+> Ref papers: One might expect that generating only actions (not video) would accelerate inference, but at 14B scale we empirically found out that the speed gain is minimal—the number of diffusion steps and the number of DiT blocks dominate latency. Moreover, because video and action are jointly trained for strong cross-modal alignment, naively reducing action denoising steps degrades quality. This motivates DREAMZERO-Flash.
+
+具体包括四类加速：
+
+- **Asynchronous Closed-Loop Execution**
+- **System-level Optimizations：** CFG Parallelism；DiT Cache（16 steps → 4 steps）
+- **Model Steps Optimizations：** DreamZero-Flash，详见 Q2
+- **Infra Optimizations：** Torch Compile and CUDA Graphs；Post-Training Quantization；Kernel and Scheduler Enhancements
+
+
+
 ## 关键发现
 
-1. DreamZero 开启了超越传统 VLA 和之前 WAM 的新泛化能力——**跨环境、跨任务以及跨形态**（见图 2 和图 3）。与最先进的预训练 VLA 相比，在环境和任务泛化基准上的平均 task progress 提升超过 **2 倍**。
+1. DreamZero 开启了超越传统 VLA 和之前 WAM 的新泛化能力。
 2. DreamZero 表明，**可以从多样化、异构的数据中有效地学习通用策略**，打破了通用机器人策略需要多次重复演示的传统观念。在这之前，虽然其他 WAM 研究表明，与 VLA 相比，从视频预测中学习到的先验可以提高动作学习的样本效率（Liao 等，2025；Pai 等，2025），但大多数工作仍然集中在重复演示上。此外，即使在任务特定的后训练之后，DreamZero 的环境泛化能力仍然保留，平均 task progress 比最先进的 VLA 高出 **10%**。
 3. DreamZero 展示了**两种 cross-embodiment transfer 的形式**。首先，仅通过来自另一台机器人（YAM）或人类的视频演示，就能让目标机器人（AgiBot G1）在未见过的任务上性能提升超过 **42%**，而只需要 **10–20 分钟**的数据。第二，更令人惊讶的是，DreamZero 的跨具身的少样本快速适应能力：一个在 AgiBot G1 上预训练的模型，仅用 **30 分钟**的试玩数据就能适应一台全新的机器人（YAM），同时保留零样本泛化能力。
 
@@ -139,6 +168,25 @@ $$
 而且性能损失很小。
 
 
+### Q3: 什么叫WAM？ 以及为什么叫做WAM，而不是VAM？
+> Ref paper: Section 2.2
+
+**WAMs：**只要利用了world modeling的能力(预测future video/state)for action prediction的都叫WAM；
+
+**WAM vs VAM：** video action model使用video和action对齐只是其中形式之一，未来更有可能和触觉、力学感知、或学习到的别的latent representation对齐。
+
+
+### Q4: Roles of Video Generation Model in action- prediction？
+> VDM在action prediction领域的roles，以及发展流程，主要有以下三类方法：
+>
+> (Ref paper Section 2.2)
+
+1. 用VDM推理时候合成action trajectory，接着提取action(IDM, flow map etc.)
+2. 用VDM训练之前合成robot data for unseen behaviors in novel environments
+3. 用VDM从large-scale data中学到的inherit rich visual dynamics priors，jointly预测video和action，让模型学习建立 world transition 和 robot action 的对应关系，使得video prediction 成为 action 的隐式视觉推理器。
+
+
+
 
 ## 局限与疑问
 
@@ -191,7 +239,7 @@ $$
 另外，这里必须区分两种看起来都像“16 → 4”的加速：
 
 1. **DiT Caching：16 个 solver steps 仍然存在。** 当相邻 velocity 的方向足够一致时，模型复用缓存结果，平均只执行约 4 次真正的 DiT forward。论文称其对视频与动作质量的影响很小。
-2. **4-step sampling：真的只运行 4 个 denoising steps。** Table 3 中 DreamZero 4-step 的 83% 指的是这种设置，不是 DiT Cache 的“约 4 次 forward”。
+2. **4-step sampling：真的只运行 4 个 denoising steps。** Table 3 中 DreamZero 4-step 的 83% 指的是这种设置，不是 DiT Cache 的“约 4 次 forward”，另外DiT cache还有点小问题，因为要计算相邻steps score的。
 
 
 ### 2.2 为什么不用 DMD？
