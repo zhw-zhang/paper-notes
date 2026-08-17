@@ -1,6 +1,6 @@
 (() => {
   const data = window.PAPER_NOTES_DATA || { generated_at: "", build_mode: "public", papers: [] };
-  const state = { query: "", tag: "全部", sort: "newest", activePaper: null };
+  const state = { query: "", tag: "全部", sort: "created", activePaper: null };
   const repositoryUrl = "https://github.com/zhw-zhang/paper-notes";
   const fullscreenSessionKey = "paper-notes-fullscreen-paper";
   const scrollSessionKey = "paper-notes-reader-scroll";
@@ -526,13 +526,14 @@ accent_headings: []
     const authorNames = paper.authors.split(",").map((name) => name.trim()).filter(Boolean);
     const cardAuthors = authorNames.length > 2 ? `${authorNames[0]} et al.` : paper.authors;
     const minutes = readingMinutes(paper.body);
+    const updatedDate = formatDate(String(paper.updated_at || paper.created_at || paper.read_date).slice(0, 10));
     return `<article class="paper-card">
       <button class="card-button" type="button" data-slug="${escapeHtml(paper.slug)}" aria-label="打开《${escapeHtml(paper.title)}》详情">
         <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span class="card-top-meta"><span>约 ${minutes} 分钟</span><span aria-hidden="true">·</span><span>${formatDate(paper.read_date)}</span></span></div>
         <h3>${escapeHtml(paper.title)}</h3>
         <p class="authors">${escapeHtml(cardAuthors)}${paper.venue ? ` · ${escapeHtml(paper.venue)}` : ""}</p>
         <p class="one-liner">${escapeHtml(paper.one_liner)}</p>
-        <div class="card-bottom"><div class="card-tags">${tags}</div><span class="arrow" aria-hidden="true">↗</span></div>
+        <div class="card-bottom"><span class="card-updated">Last updated ${updatedDate}</span><div class="card-tags">${tags}</div><span class="arrow" aria-hidden="true">↗</span></div>
       </button>
     </article>`;
   }

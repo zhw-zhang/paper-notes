@@ -186,8 +186,9 @@ main { width: min(1480px, calc(100% - 64px)); margin: 0 auto; }
 .authors { margin: 0; overflow: hidden; color: var(--muted); font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
 .one-liner { max-width: 710px; margin: 18px 0 20px; overflow: hidden; display: -webkit-box; color: color-mix(in srgb, var(--ink) 88%, var(--muted)); font-size: 0.84rem; line-height: 1.65; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .card-bottom { margin-top: auto; display: flex; gap: 20px; align-items: center; justify-content: space-between; }
-.card-tags { min-width: 0; height: 1.1rem; overflow: hidden; display: flex; gap: 6px 10px; flex-wrap: wrap; align-content: flex-start; }
+.card-tags { min-width: 0; height: 1.1rem; flex: 1 1 auto; overflow: hidden; display: flex; gap: 6px 10px; flex-wrap: wrap; align-content: flex-start; }
 .card-tags span { flex: 0 0 auto; color: var(--muted); font-size: 0.7rem; line-height: 1.1rem; white-space: nowrap; }
+.card-updated { flex: 0 0 auto; color: color-mix(in srgb, var(--muted) 74%, transparent); font-size: 0.64rem; white-space: nowrap; }
 .arrow { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: 1.25rem; transition: 150ms ease; }
 .empty-state { padding: 90px 20px; border: 1px solid var(--line); text-align: center; }
 .empty-state span { color: var(--accent); font-size: 3rem; }
