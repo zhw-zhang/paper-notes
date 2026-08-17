@@ -1,7 +1,7 @@
 ---
 title: "从 Full Attention 到 Sparse–Linear Attention：长上下文注意力笔记"
 paper_url: "https://www.haoyizhu.site/blog/sparse-linear-attention/"
-authors: "Haoyi Zhu（两篇blogs）"
+authors: "Haoyi Zhu（two blogs）"
 venue: "Blog + Papers"
 published: "2026"
 read_date: "2026-08-13"
