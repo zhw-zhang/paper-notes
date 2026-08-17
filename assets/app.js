@@ -289,6 +289,10 @@
       .format(new Date(`${value}T00:00:00`));
   }
 
+  function formatCardDate(value) {
+    return value ? String(value).slice(0, 10) : "—";
+  }
+
   function localTimestamp(date) {
     const pad = (value) => String(value).padStart(2, "0");
     const offsetMinutes = -date.getTimezoneOffset();
@@ -526,10 +530,10 @@ accent_headings: []
     const authorNames = paper.authors.split(",").map((name) => name.trim()).filter(Boolean);
     const cardAuthors = authorNames.length > 2 ? `${authorNames[0]} et al.` : paper.authors;
     const minutes = readingMinutes(paper.body);
-    const updatedDate = formatDate(String(paper.updated_at || paper.created_at || paper.read_date).slice(0, 10));
+    const updatedDate = formatCardDate(paper.updated_at || paper.created_at || paper.read_date);
     return `<article class="paper-card">
       <button class="card-button" type="button" data-slug="${escapeHtml(paper.slug)}" aria-label="打开《${escapeHtml(paper.title)}》详情">
-        <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span class="card-top-meta"><span>约 ${minutes} 分钟</span><span aria-hidden="true">·</span><span>${formatDate(paper.read_date)}</span></span></div>
+        <div class="card-top"><span class="status">${escapeHtml(paper.status)}</span><span class="card-top-meta"><span>${minutes} min</span><span aria-hidden="true">·</span><span>${formatCardDate(paper.read_date)}</span></span></div>
         <h3>${escapeHtml(paper.title)}</h3>
         <p class="authors">${escapeHtml(cardAuthors)}${paper.venue ? ` · ${escapeHtml(paper.venue)}` : ""}</p>
         <p class="one-liner">${escapeHtml(paper.one_liner)}</p>
