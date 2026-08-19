@@ -1,7 +1,7 @@
 ---
 title: "从 Full Attention 到 Sparse–Linear Attention：长上下文注意力笔记"
 paper_url: "https://www.haoyizhu.site/blog/sparse-linear-attention/"
-authors: "Haoyi Zhu（two blogs）"
+authors: "Summary Insights"
 venue: "Blog + Papers"
 published: "2026"
 read_date: "2026-08-13"
@@ -22,10 +22,7 @@ accent_headings: ["核心方法", "我的判断"]
 
 ## 研究问题
 
-这篇笔记来自我读完 Haoyi Zhu 的两篇博客：
-
-- [Sparse Linear Attention：当稀疏遇上线性注意力](https://www.haoyizhu.site/blog/sparse-linear-attention/)
-- [视频 DeltaNet 的反思](https://www.haoyizhu.site/blog/video-delta-rule/)
+这篇笔记来自我读了的大量blogs和现有memory相关design工作的总结和思考：
 
 我今天主要想表达两件事：
 
