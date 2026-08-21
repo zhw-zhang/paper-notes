@@ -217,6 +217,9 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .detail-body h3 { margin: 34px 0 11px; color: var(--accent); font-size: 1.04rem; }
 .detail-body p, .detail-body li { font-size: 1.02rem; line-height: 1.95; }
 .detail-body ul, .detail-body ol { padding-left: 1.35rem; }
+.detail-body .lettered-list { margin: 4px 0 2px; padding-left: 1.5rem; }
+.detail-body .lettered-list p { margin: 0; }
+.detail-body .lettered-list p + p { margin-top: 2px; }
 .detail-body blockquote { margin: 27px 0; padding-left: 18px; border-left: 3px solid var(--accent); color: var(--muted); }
 .detail-body blockquote p { margin: 0; color: inherit; }
 .detail-body blockquote p + p { margin-top: 8px; }
@@ -250,6 +253,7 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 
 .paper-figure { margin: 36px 0; }
 .paper-figure-narrow { width: 95%; margin-left: auto; margin-right: auto; }
+.paper-figure-scale85 { width: 85%; margin-left: auto; margin-right: auto; }
 .paper-image-button { width: 100%; padding: 0; border: 1px solid var(--line); background: var(--surface-2); }
 .paper-image-button img { display: block; width: 100%; height: auto; }
 .paper-figure figcaption { margin-top: 10px; color: var(--muted); font-size: 0.72rem; }

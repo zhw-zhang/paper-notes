@@ -186,13 +186,14 @@
         continue;
       }
 
-      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)(?:\{\.(narrow)\})?$/i);
+      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)(?:\{\.(narrow|scale85)\})?$/i);
       if (image) {
         closeList();
         const altText = image[1];
         const imagePath = image[2];
         const caption = image[3] || "";
-        const figureClass = image[4] === "narrow" ? "paper-figure paper-figure-narrow" : "paper-figure";
+        const figureStyle = image[4];
+        const figureClass = figureStyle ? `paper-figure paper-figure-${figureStyle}` : "paper-figure";
         output.push(`<figure class="${figureClass}">
           <button class="paper-image-button" type="button" data-image-src="${escapeHtml(imagePath)}" data-image-alt="${escapeHtml(altText)}" data-image-caption="${escapeHtml(caption)}" aria-label="放大查看：${escapeHtml(altText)}">
             <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" />
@@ -245,6 +246,22 @@
       if (ordered) {
         if (listType !== "ol") { closeList(); listType = "ol"; output.push("<ol>"); }
         output.push(`<li>${inlineMarkdown(ordered[1])}</li>`);
+        continue;
+      }
+      if (/^[a-z]\)\s+/.test(line)) {
+        const letteredLines = [line];
+        while (index + 1 < lines.length && /^[a-z]\)\s+/.test(lines[index + 1].trim())) {
+          index += 1;
+          letteredLines.push(lines[index].trim());
+        }
+        const letteredHtml = `<div class="lettered-list">${letteredLines.map((item) => `<p>${inlineMarkdown(item)}</p>`).join("")}</div>`;
+        const last = output[output.length - 1];
+        if (listType && last && last.endsWith("</li>")) {
+          output[output.length - 1] = `${last.slice(0, -5)}${letteredHtml}</li>`;
+        } else {
+          closeList();
+          output.push(letteredHtml);
+        }
         continue;
       }
 

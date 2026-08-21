@@ -23,7 +23,7 @@ DIST_DIR = ROOT / "dist"
 PUBLIC_DIST_DIR = ROOT / "dist-public"
 MAX_MEDIA_BYTES = 2 * 1024 * 1024
 IMAGE_PATTERN = re.compile(
-    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)(?:\{\.(narrow)\})?\s*$',
+    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)(?:\{\.(narrow|scale85)\})?\s*$',
     re.IGNORECASE | re.MULTILINE,
 )
 REQUIRED_FIELDS = {
