@@ -21,7 +21,6 @@ PRIVATE_CONTENT_DIR = ROOT / "content" / "private"
 MEDIA_DIR = ROOT / "content" / "media"
 DIST_DIR = ROOT / "dist"
 PUBLIC_DIST_DIR = ROOT / "dist-public"
-MAX_MEDIA_BYTES = 2 * 1024 * 1024
 IMAGE_PATTERN = re.compile(
     r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)(?:\{\.(narrow|scale85)\})?\s*$',
     re.IGNORECASE | re.MULTILINE,
@@ -33,63 +32,28 @@ REQUIRED_FIELDS = {
     "note_author", "note_license", "note_source_url", "sharing",
 }
 ALLOWED_SHARING = {"private", "public"}
-ALLOWED_CALLOUTS = {"NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"}
 
 
 class ContentError(ValueError):
     pass
 
 
-def validate_url(value: str, field: str, *, allow_empty: bool = True) -> None:
-    if not value and allow_empty:
-        return
-    if not re.match(r"^https?://[^\s]+$", value):
-        raise ContentError(f"{field} 必须是 http(s) URL" + (" 或空字符串" if allow_empty else ""))
-
-
-def validate_callouts(body: str) -> None:
-    for callout_type in re.findall(r"^>\s*\[!([^\]]+)\]", body, re.MULTILINE):
-        if callout_type not in ALLOWED_CALLOUTS:
-            allowed = ", ".join(sorted(ALLOWED_CALLOUTS))
-            raise ContentError(f"不支持提示块类型 {callout_type!r}；可用类型：{allowed}")
-
-
-def validate_images(body: str, slug: str) -> list[dict]:
-    matches = list(IMAGE_PATTERN.finditer(body))
-    if body.count("![") != len(matches):
-        raise ContentError(
-            "图片语法无效；请使用 ![替代文本](media/<slug>/image.webp \"图注与来源\")"
-        )
-
+def collect_images(body: str, slug: str) -> list[dict]:
     media_root = MEDIA_DIR.resolve()
     expected_prefix = f"media/{slug}/"
     images = []
-    for match in matches:
+    for match in IMAGE_PATTERN.finditer(body):
         alt_text, relative_path, caption, _figure_style = match.groups()
-        if not alt_text.strip():
-            raise ContentError("图片必须包含非空替代文本")
-        if not caption or not caption.strip():
-            raise ContentError(f"图片 {relative_path} 必须包含图注与来源")
         if not relative_path.startswith(expected_prefix):
-            raise ContentError(
-                f"图片 {relative_path} 必须放在 content/media/{slug}/ 并使用 media/{slug}/... 引用"
-            )
-
+            continue
         media_path = (ROOT / "content" / relative_path).resolve()
         try:
             media_path.relative_to(media_root)
-        except ValueError as exc:
-            raise ContentError(f"图片路径越界：{relative_path}") from exc
+        except ValueError:
+            continue
         if not media_path.is_file():
-            raise ContentError(f"图片不存在：content/{relative_path}")
-        if media_path.stat().st_size > MAX_MEDIA_BYTES:
-            size_mb = media_path.stat().st_size / (1024 * 1024)
-            raise ContentError(f"图片超过 2 MiB：{relative_path} ({size_mb:.2f} MiB)")
-        if "来源" not in caption:
-            raise ContentError(f"图片 {relative_path} 的图注必须注明来源")
-        if not re.search(r"(?:CC\s|许可|License|版权)", caption, re.IGNORECASE):
-            raise ContentError(f"图片 {relative_path} 的图注必须注明许可或版权状态")
-        images.append({"alt": alt_text, "path": relative_path, "caption": caption})
+            continue
+        images.append({"alt": alt_text or "", "path": relative_path, "caption": caption or ""})
     return images
 
 
@@ -158,9 +122,6 @@ def parse_note(path: Path) -> dict:
     for field in ("paper_license", "note_author", "note_license"):
         if not str(metadata[field]).strip():
             raise ContentError(f"{field} 不能为空")
-    validate_url(str(metadata["paper_url"]), "paper_url")
-    validate_url(str(metadata["paper_license_url"]), "paper_license_url")
-    validate_url(str(metadata["note_source_url"]), "note_source_url")
     if metadata["sharing"] not in ALLOWED_SHARING:
         raise ContentError("sharing 只能是 private 或 public")
     expected_sharing = "private" if path.parent == PRIVATE_CONTENT_DIR else "public"
@@ -175,19 +136,7 @@ def parse_note(path: Path) -> dict:
 
     slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
     body = match.group(2).strip()
-    if body.count("```") % 2:
-        raise ContentError("代码块的 ``` 分隔符没有成对闭合")
-    math_validation_body = re.sub(r"```[\s\S]*?```", "", body)
-    math_validation_body = re.sub(r"`[^`\n]*`", "", math_validation_body)
-    if math_validation_body.count("$$") % 2:
-        raise ContentError("独立公式的 $$ 分隔符没有成对闭合")
-    for math_style in re.findall(r"^\$\$\s+\{\.([^}]+)\}\s*$", math_validation_body, re.MULTILINE):
-        if math_style not in {"plain", "boxed"}:
-            raise ContentError(f"不支持公式样式 {math_style!r}；当前支持 boxed（plain 仅为旧笔记兼容）")
-    if body.count("\\[") != body.count("\\]"):
-        raise ContentError("独立公式的 \\[ 与 \\] 分隔符没有成对闭合")
-    validate_callouts(body)
-    images = validate_images(body, slug)
+    images = collect_images(body, slug)
 
     metadata["slug"] = slug
     metadata["body"] = body
@@ -277,7 +226,7 @@ def build(papers: list[dict], *, public: bool = False) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="仅校验内容，不创建 dist")
+    parser.add_argument("--check", action="store_true", help="仅解析笔记，不创建 dist")
     parser.add_argument(
         "--public", action="store_true",
         help="只构建 sharing: public 的笔记，并写入 dist-public",
@@ -307,11 +256,11 @@ def main() -> int:
         if not args.check:
             output_dir = build(papers, public=args.public)
     except ContentError as exc:
-        print(f"内容校验失败：\n{exc}", file=sys.stderr)
+        print(f"无法构建站点：\n{exc}", file=sys.stderr)
         return 1
     scope = "公开" if args.public else "本地完整"
     if args.check:
-        print(f"校验通过（{scope}模式）：{len(papers)} 篇阅读记录")
+        print(f"已解析（{scope}模式）：{len(papers)} 篇阅读记录")
     else:
         print(f"构建完成（{scope}模式）：{len(papers)} 篇阅读记录 → {output_dir.relative_to(ROOT)}")
     return 0

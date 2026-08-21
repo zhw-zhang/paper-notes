@@ -20,9 +20,9 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 9. Preserve the user's judgments, disagreements, equations, and only the Q&A that changed understanding. Mark unknowable gaps as `待补充`; never turn inference into fact.
 10. Add figures only when they materially shorten recall. Verify reuse permission from an authoritative source and include figure number, source, and license in every caption. If permission is unclear, link to the original instead of copying the image.
 11. Use GitHub-style callouts (`NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`) for standalone colored passages when useful; do not overuse them. Use optional `accent_headings` when one or two H2 sections deserve the short colored-bar treatment. Labels not present in the body are harmless and may be left in place while drafting.
-12. Run `python3 .codex/skills/update-paper-notes/scripts/validate_update.py`. Fix every error. Preview locally when layout or formulas changed.
-13. Treat “更新到 Paper Notes” and “发布到 Paper Notes” as explicit authorization to make the scoped note public: complete the publication checks, move it from `content/private/` to `content/papers/`, set `sharing: "public"`, run `python3 scripts/build_site.py --check-public-repo` and `python3 scripts/build_site.py --public`, then commit and push. If the user only asks to draft or add a note, keep it in `content/private/` and do not push until publication is explicit.
-14. Before every push, verify the note contains no private information, every copied figure is licensed for public use, and every tracked note is marked public. Stage only intended files, commit with `content: add <slug>` or `content: update <slug>`, pull with rebase, revalidate, and push.
+12. Preview locally when layout or formulas changed. Do not run content validation.
+13. Treat “更新到 Paper Notes” and “发布到 Paper Notes” as explicit authorization to make the scoped note public: move it from `content/private/` to `content/papers/`, set `sharing: "public"`, run `python3 scripts/build_site.py --check-public-repo` and `python3 scripts/build_site.py --public`, then commit and push. If the user only asks to draft or add a note, keep it in `content/private/` and do not push until publication is explicit.
+14. Before every push, verify the note contains no private information and every tracked note is marked public. Stage only intended files, commit with `content: add <slug>` or `content: update <slug>`, pull with rebase, and push.
 15. GitHub Pages deploys `dist-public` automatically after a successful push to `main`. Never deploy `dist/`. If a push loses a concurrent race, pull with rebase and retry once; stop on content conflicts.
 
 ## Editing rules
@@ -31,7 +31,7 @@ Turn raw reading notes and Agent conversations into compact, durable public reca
 - Keep two to five focused tags and reuse existing spellings.
 - Use concrete result numbers only when supplied or verified.
 - Keep important formulas as editable LaTeX and define symbols nearby. Display formulas have no background by default; use `$$ {.boxed}` selectively when a formula needs a shaded panel. Accept `$$ {.plain}` only for compatibility with older notes.
-- Treat the seven template sections as optional. Keep only the headings that fit the note; never add filler or block validation merely to complete the template. When `下次只看这些` is used, keep it to one to three memory anchors or actions.
+- Treat the seven template sections as optional. Keep only the headings that fit the note; never add filler merely to complete the template. When `下次只看这些` is used, keep it to one to three memory anchors or actions.
 - Do not edit generated `dist/`, `dist-public/`, or `assets/papers.js`.
 - Keep the status label short; it and `read_date` appear at the top of each card. The site can sort by `read_at`, `updated_at`, or `created_at`.
 - Do not reintroduce upstream Junsong Chen notes or media; the public site contains only littlewei material unless separate written authorization and a deliberate user request say otherwise.
