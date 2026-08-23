@@ -254,6 +254,7 @@ dialog::backdrop { background: rgba(13, 17, 29, 0.7); backdrop-filter: blur(7px)
 .paper-figure { margin: 36px 0; }
 .paper-figure-narrow { width: 95%; margin-left: auto; margin-right: auto; }
 .paper-figure-scale85 { width: 85%; margin-left: auto; margin-right: auto; }
+.paper-figure-scale90 { width: 90%; margin-left: auto; margin-right: auto; }
 .paper-image-button { width: 100%; padding: 0; border: 1px solid var(--line); background: var(--surface-2); }
 .paper-image-button img { display: block; width: 100%; height: auto; }
 .paper-figure figcaption { margin-top: 10px; color: var(--muted); font-size: 0.72rem; }

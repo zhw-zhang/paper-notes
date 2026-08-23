@@ -186,7 +186,7 @@
         continue;
       }
 
-      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)(?:\{\.(narrow|scale85)\})?$/i);
+      const image = line.match(/^!\[([^\]]+)\]\((media\/[^\s)"']+\.(?:png|jpe?g|webp))(?:\s+"([^"]+)")?\)(?:\{\.(narrow|scale85|scale90)\})?$/i);
       if (image) {
         closeList();
         const altText = image[1];

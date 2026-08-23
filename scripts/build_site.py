@@ -22,7 +22,7 @@ MEDIA_DIR = ROOT / "content" / "media"
 DIST_DIR = ROOT / "dist"
 PUBLIC_DIST_DIR = ROOT / "dist-public"
 IMAGE_PATTERN = re.compile(
-    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)(?:\{\.(narrow|scale85)\})?\s*$',
+    r'^!\[([^\]\n]+)\]\((media/[^\s)"\']+\.(?:png|jpe?g|webp))(?:\s+"([^"\n]+)")?\)(?:\{\.(narrow|scale85|scale90)\})?\s*$',
     re.IGNORECASE | re.MULTILINE,
 )
 REQUIRED_FIELDS = {
