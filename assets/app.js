@@ -129,6 +129,64 @@
       const cells = parseTableRow(value);
       return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
     };
+    const parseListItem = (value) => {
+      const match = value.match(/^([ \t]*)([-*]|\d+[.)]|[a-z]\))\s+(.+)$/i);
+      if (!match) return null;
+      const marker = match[2];
+      const kind = /^[-*]$/.test(marker) ? "ul" : /^[a-z]\)$/i.test(marker) ? "alpha" : "ol";
+      const order = kind === "ul"
+        ? null
+        : kind === "alpha"
+          ? marker.toLowerCase().charCodeAt(0) - 96
+          : Number.parseInt(marker, 10);
+      return {
+        indent: match[1].replace(/\t/g, "    ").length,
+        kind,
+        order,
+        text: match[3],
+      };
+    };
+    const renderListLevel = (items, startIndex, indent, kind) => {
+      const tag = kind === "ul" ? "ul" : "ol";
+      const typeAttribute = kind === "alpha" ? ' type="a"' : "";
+      let html = `<${tag}${typeAttribute}>`;
+      let itemIndex = startIndex;
+      while (itemIndex < items.length) {
+        const item = items[itemIndex];
+        if (item.indent !== indent || item.kind !== kind) break;
+        const valueAttribute = tag === "ol" && item.order ? ` value="${item.order}"` : "";
+        html += `<li${valueAttribute}>${inlineMarkdown(item.text)}`;
+        itemIndex += 1;
+        while (itemIndex < items.length && items[itemIndex].indent > indent) {
+          const nested = renderListLevel(
+            items,
+            itemIndex,
+            items[itemIndex].indent,
+            items[itemIndex].kind,
+          );
+          html += nested.html;
+          itemIndex = nested.nextIndex;
+        }
+        html += "</li>";
+      }
+      html += `</${tag}>`;
+      return { html, nextIndex: itemIndex };
+    };
+    const renderListBlock = (items) => {
+      let html = "";
+      let itemIndex = 0;
+      while (itemIndex < items.length) {
+        const rendered = renderListLevel(
+          items,
+          itemIndex,
+          items[itemIndex].indent,
+          items[itemIndex].kind,
+        );
+        html += rendered.html;
+        itemIndex = rendered.nextIndex;
+      }
+      return html;
+    };
 
     for (let index = 0; index < lines.length; index += 1) {
       const raw = lines[index];
@@ -236,32 +294,17 @@
         continue;
       }
 
-      const unordered = line.match(/^[-*]\s+(.+)$/);
-      if (unordered) {
-        if (listType !== "ul") { closeList(); listType = "ul"; output.push("<ul>"); }
-        output.push(`<li>${inlineMarkdown(unordered[1])}</li>`);
-        continue;
-      }
-      const ordered = line.match(/^\d+[.)]\s+(.+)$/);
-      if (ordered) {
-        if (listType !== "ol") { closeList(); listType = "ol"; output.push("<ol>"); }
-        output.push(`<li>${inlineMarkdown(ordered[1])}</li>`);
-        continue;
-      }
-      if (/^[a-z]\)\s+/.test(line)) {
-        const letteredLines = [line];
-        while (index + 1 < lines.length && /^[a-z]\)\s+/.test(lines[index + 1].trim())) {
+      const firstListItem = parseListItem(raw);
+      if (firstListItem) {
+        closeList();
+        const listItems = [firstListItem];
+        while (index + 1 < lines.length) {
+          const nextListItem = parseListItem(lines[index + 1]);
+          if (!nextListItem) break;
           index += 1;
-          letteredLines.push(lines[index].trim());
+          listItems.push(nextListItem);
         }
-        const letteredHtml = `<div class="lettered-list">${letteredLines.map((item) => `<p>${inlineMarkdown(item)}</p>`).join("")}</div>`;
-        const last = output[output.length - 1];
-        if (listType && last && last.endsWith("</li>")) {
-          output[output.length - 1] = `${last.slice(0, -5)}${letteredHtml}</li>`;
-        } else {
-          closeList();
-          output.push(letteredHtml);
-        }
+        output.push(renderListBlock(listItems));
         continue;
       }
 
