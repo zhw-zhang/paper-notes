@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-14"
 read_at: "2026-08-14T13:45:42+08:00"
 created_at: "2026-08-14T13:45:42+08:00"
-updated_at: "2026-08-17T11:49:00+08:00"
+updated_at: "2026-08-26T12:05:00+08:00"
 status: "已精读"
 tags: ["World Action Models", "Video Generation", "Robotics"]
 one_liner: "DreamZero 是使用 video diffusion backbone 的 WAM。和 VLA 不同，WAM 将 VDM 中学到的 world-evolution knowledge 作为 prior，通过共同预测jointly predict video 和 action，让模型学习建立 world transition 和 robot action 的对应关系，使得video prediction 成为 action 的隐式视觉推理器，因此拥有强大的泛化性以及知识 transfer 能力。"
@@ -51,7 +51,7 @@ DreamZero 是 WAM，使用 video diffusion backbone。不同于Latent world mode
 这种 formulation 有两层：一是把提升 robot 能力进一步归结为提升 VDM；二是出现当前 VLA 不具备的三种特性：
 
 - **zero-shot generalization** to novel tasks or new scenes
-- **effective learning diverse skills from heterogeneous robot data, instead of repetitive demonstrate data**（对于VLA，只学习绑定两者的联系即可）
+- **effective learning diverse skills from heterogeneous robot data, instead of repetitive demonstrate data**（对比于 VLA，WAM只学习绑定两者的联系即可）
 - **extremely efficient cross-embodiment transfer from videos**（两种跨具身迁移）
 
 
@@ -78,7 +78,7 @@ DreamZero 有着强大的任务学习能力和知识 transfer 能力：
 ### 关键技术
 **1. Jointly predict & AR attention struture**
 
-![DreamZero 训练与推理 attention mask](media/dreamzero-WAM/attention-mask.png "图 2｜论文 Figure 14：DreamZero 的 attention strategy。(a) 训练时的 QKV self-attention mask：纵轴为 Query，横轴为 Key/Value。给定 conditioning frames（C0, C1, C2），模型预测下一帧 velocity（Z1, Z2, Z3）和 action（Y1, Y2, Y3）。(b) 推理时先计算条件帧的 KV-cache，再拼接上去预测 action 与 frames。例如 Y3 可以 attend 到 C0, C1, C2，把先前视觉观测当作历史。推理时 C0, C1, C2 会替换成 GT observations。来源：Ye et al., World Action Models are Zero-shot Policies，https://arxiv.org/abs/2602.15922 ；许可：CC BY 4.0。"){.narrow}
+![DreamZero 训练与推理 attention mask](media/dreamzero-WAM/attention-mask.png "图 2｜论文 Figure 14：DreamZero 的 attention strategy。(a) 训练时的 QKV self-attention mask：横轴为 Query，纵轴为 Key/Value。给定 conditioning frames（C0, C1, C2），模型预测下一帧 velocity（Z1, Z2, Z3）和 action（Y1, Y2, Y3）。(b) 推理时先计算条件帧的 KV-cache，再拼接上去预测 action 与 frames。例如 Y3 可以 attend 到 C0, C1, C2，把先前视觉观测当作历史。推理时 C0, C1, C2 会替换成 GT observations。来源：Ye et al., World Action Models are Zero-shot Policies，https://arxiv.org/abs/2602.15922 ；许可：CC BY 4.0。"){.narrow}
 
 
 **2. Real-time inference**
@@ -88,7 +88,7 @@ DreamZero 有着强大的任务学习能力和知识 transfer 能力：
 
 具体包括四类加速：
 
-- **Asynchronous Closed-Loop Execution**
+- **Asynchronous Closed-Loop Execution：** 工程前后运行顺序层面，异步运行
 - **System-level Optimizations：** CFG Parallelism；DiT Cache（16 steps → 4 steps）
 - **Model Steps Optimizations：** DreamZero-Flash，详见 Q2
 - **Infra Optimizations：** Torch Compile and CUDA Graphs；Post-Training Quantization；Kernel and Scheduler Enhancements
@@ -128,9 +128,9 @@ $$
 
 论文还做了消融：专门控制总数据量都为 500h，task progress 从 repetitive 的 **33%** 提升到 diverse 的 **50%**。这是这篇 paper 特别有价值的地方。
 
-**3. 联合预测（可能）**
+**3. 联合预测（可能--dyna-2 已验证很重要）**
 
-DreamZero 把“想象未来”和“执行 action”绑得更紧。早期 WAM，例如 Mimic-Video，大概是基于 video latent prediction 之后的 IDM（inverse 动力学）过程；而 DreamZero 则是联合学习和预测，能够把两者绑定得更紧，让预测和视频更加一致。
+DreamZero 把“想象未来”和“执行 action”联合一起预测。早期 WAM，例如 Mimic-Video，大概是基于 video latent prediction 之后的 IDM（inverse 动力学）过程；而 DreamZero 则是联合学习和预测，能够把两者绑定得更紧，让预测和视频更加一致。
 
 > [!NOTE]
 > **Mimic-Video的两阶段方案**
@@ -182,7 +182,7 @@ $$
 > (Ref paper Section 2.2)
 
 1. 用VDM推理时候合成action trajectory，接着提取action(IDM, flow map etc.)
-2. 用VDM训练之前合成robot data for unseen behaviors in novel environments
+2. 用VDM训练之前合成robot data for unseen behaviors in novel environments（T2V or V2V）
 3. 用VDM从large-scale data中学到的inherit rich visual dynamics priors，jointly预测video和action，让模型学习建立 world transition 和 robot action 的对应关系，使得video prediction 成为 action 的隐式视觉推理器。
 
 
@@ -195,7 +195,7 @@ $$
 - DreamZero：把 Joint-WAM scale 到 foundation policy。
 - Fast-WAM：质疑 test-time future imagination 是否必要。
 - Faster-WAM：发现完全砍 future 会伤 OOD，于是保留 one-pass latent future conditioning。
-需要注意的是：Fast-WAM和Faster-WAM 延续了 DreamZero 这类 Joint-WAM 的思想，但作者自己重新搭了一套受控实验框架，backbone 用的是 Wan2.2-5B，因此没办法和DreamZero-14B直接比较绝对的谁好谁坏。
+需要注意的是：Fast-WAM和Faster-WAM 延续了 DreamZero 这类 Joint-WAM 的思想，但这两篇作者自己重新搭了一套受控实验框架，backbone 用的是 Wan2.2-5B，因此没办法和DreamZero-14B直接比较绝对的谁好谁坏。
 
 | 方法 | 推理时 future | 速度 | 普通 ID benchmark | OOD shift |
 | --- | --- | :---: | :---: | :---: |
@@ -206,7 +206,7 @@ $$
 ### 2.1 DreamZero 和 DreamZero-flash 从 16-step 到 4-step、1-step：应该有很大损失的吧？这种直接硬拉到few-steps的肯定有问题？
 
 DreamZero 原始推理使用 Flow UniPC scheduler；为了得到平滑动作，基线需要 16 个 denoising steps。
-普通 DreamZero 继续从 4-step 硬降到 1-step 时，任务进度从 83% 降至 52%，说明直接减少采样步数确实有明显损失。DreamZero-Flash 通过解耦 video 与 action 的噪声日程，让模型在训练时就学会“从仍然很吵的 future video 中预测干净 action”，最终把 1-step 恢复到 74%。
+普通 DreamZero 继续从 4-step 硬降到 1-step 时，任务进度从 83% 降至 52%，说明直接减少采样步数确实有明显损失。DreamZero-Flash 通过解耦 video 与 action 的噪声 schedule，让模型在训练时就学会“从仍然很吵的 future video 中预测干净 action”，最终把 1-step 恢复到 74%，但可以看到仍然会对准确率有很大影响。
 
 **DreamZero Few-Step / Flash 证据链**
 
@@ -238,15 +238,17 @@ $$
 
 另外，这里必须区分两种看起来都像“16 → 4”的加速：
 
-1. **DiT Caching：16 个 solver steps 仍然存在。** 当相邻 velocity 的方向足够一致时，模型复用缓存结果，平均只执行约 4 次真正的 DiT forward。论文称其对视频与动作质量的影响很小。
-2. **4-step sampling：真的只运行 4 个 denoising steps。** Table 3 中 DreamZero 4-step 的 83% 指的是这种设置，不是 DiT Cache 的“约 4 次 forward”，另外DiT cache还有点小问题，因为要计算相邻steps score的。
+1. **DiT Caching：16 个 solver steps 仍然存在，只是** 当相邻 velocity 的方向足够一致时，模型复用缓存结果，平均只执行约 4 次真正的 DiT forward。论文称其对视频与动作质量的影响很小。另外 DiT cache 还有点小问题，因为要计算相邻 steps score，也有 cost 貌似？？
+2. **4-step sampling：真的直接只运行 4 个 denoising steps。** Table 3 中 DreamZero 4-step 的 83% 指的是这种设置，不是 DiT Cache 的“约 4 次 forward”。
 
 
 ### 2.2 为什么不用 DMD？
 
 DMD在image和video领域能做到50-steps蒸馏到4-steps且几乎没有太大损失，获得了很好的效果。但是在这里，本论文没有讨论 DMD，也没有提供相关对比，因此不能从现有证据得出“DMD 更好”或“DMD 不适用”的结论。
 
-但是DreamZero-Flash 的 1-step 虽然约快 2.3 倍，但 74%的准确率算是掉的很多的了，原先强行拉到1-steps更差，这还是finetune之后的了。我估计使用DMD应该会更好，但是有个concern是joint predict尤其是token数量不公平情况下优化会有点问题，比如video-audio这种联合优化的DMD没做的太好，例如：ominiforcing这种做了简单尝试。
+但是DreamZero-Flash 的 1-step 虽然约快 2.3 倍，但 74%的准确率算是掉的很多的了，原先强行拉到1-steps更差，这还是finetune之后的了。我估计使用DMD应该会更好，但是有个concern是joint predict尤其是token数量不公平情况下优化会有点问题，比如video-audio这种联合优化的DMD没做的太好，例如：omniforcing这种做了简单尝试。
+
+- NOTE：在 Dyna-2 里面已经验证了 2-steps DMD 效果还挺好的。。但是 2 步相比于 1 步还是翻倍的 cost 增长。
 
 ## 我的判断
 
@@ -262,3 +264,4 @@ DMD在image和video领域能做到50-steps蒸馏到4-steps且几乎没有太大�
 1. VLA到WAM各自有什么优劣？DreamZero是如何分析的？
 2. 论文证明了哪些重要结论，DreamZero和以往WAM有什么核心不同？
 3. 6个benchmark上证明的泛化能力很强，更重要的是：任务迁移能力、跨具身的迁移能力更强？
+4. 几个关键问题、和局限疑问的复习和思考？是否有更新的想法？
