@@ -33,7 +33,7 @@ accent_headings: ["核心方法", "关键发现"]
 > [!IMPORTANT]
 > VLM 先验更擅长回答“应该做什么”，却不自然具备“这个动作究竟应该如何执行”的几何、动力学与运动控制先验。
 
-![DreamZero 模型架构](media/dreamzero-WAM/framework.png "图 1｜论文 Figure 4：DreamZero 模型架构。模型有三个输入：视觉上下文（VAE 编码）、语言指令（text encoder）和本体感受状态（state encoder）。它们经过自回归 DiT backbone，用 flow matching 联合预测未来视频帧和动作，再分别解码。训练时（左）每个 chunk 在干净 video context 条件下对带噪的 video/action latent 去噪；推理时（右）预测在真实世界异步执行，并把真实观测写回 KV cache，以避免误差累积。来源：Ye et al., World Action Models are Zero-shot Policies，https://arxiv.org/abs/2602.15922 ；许可：CC BY 4.0。")
+![DreamZero 模型架构](media/dreamzero-WAM/framework.png "图 1｜论文 Figure 4：DreamZero 模型架构。模型有三个输入：视觉上下文（VAE 编码）、语言指令（text encoder）和本体感受状态（state encoder）。它们经过自回归 DiT backbone，用 flow matching 联合预测未来视频帧和动作，再分别解码。训练时（左）每个 chunk 在干净 video context 条件下对带噪的 video/action latent 去噪；推理时（右）预测在真实世界异步执行，并把真实观测写回 KV cache，以避免误差累积。来源：DreamZero。")
 
 ## 核心方法
 
@@ -78,7 +78,7 @@ DreamZero 有着强大的任务学习能力和知识 transfer 能力：
 ### 关键技术
 **1. Jointly predict & AR attention structure**
 
-![DreamZero 训练与推理 attention mask](media/dreamzero-WAM/attention-mask.png "图 2｜论文 Figure 14：DreamZero 的 attention strategy。(a) 训练时的 QKV self-attention mask：横轴为 Query，纵轴为 Key/Value。给定 conditioning frames（C0, C1, C2），模型预测下一帧 velocity（Z1, Z2, Z3）和 action（Y1, Y2, Y3）。(b) 推理时先计算条件帧的 KV-cache，再拼接上去预测 action 与 frames。例如 Y3 可以 attend 到 C0, C1, C2，把先前视觉观测当作历史。推理时 C0, C1, C2 会替换成 GT observations。来源：Ye et al., World Action Models are Zero-shot Policies，https://arxiv.org/abs/2602.15922 ；许可：CC BY 4.0。"){.narrow}
+![DreamZero 训练与推理 attention mask](media/dreamzero-WAM/attention-mask.png "图 2｜论文 Figure 14：DreamZero 的 attention strategy。(a) 训练时的 QKV self-attention mask：横轴为 Query，纵轴为 Key/Value。给定 conditioning frames（C0, C1, C2），模型预测下一帧 velocity（Z1, Z2, Z3）和 action（Y1, Y2, Y3）。(b) 推理时先计算条件帧的 KV-cache，再拼接上去预测 action 与 frames。例如 Y3 可以 attend 到 C0, C1, C2，把先前视觉观测当作历史。推理时 C0, C1, C2 会替换成 GT observations。来源：DreamZero。"){.narrow}
 
 
 **2. Real-time inference**
