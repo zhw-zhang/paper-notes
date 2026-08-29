@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-14"
 read_at: "2026-08-14T13:45:42+08:00"
 created_at: "2026-08-14T13:45:42+08:00"
-updated_at: "2026-08-26T12:05:00+08:00"
+updated_at: "2026-08-29T20:45:00+08:00"
 status: "已精读"
 tags: ["World Action Models", "Video Generation", "Robotics"]
 one_liner: "DreamZero 是使用 video diffusion backbone 的 WAM。和 VLA 不同，WAM 将 VDM 中学到的 world-evolution knowledge 作为 prior，通过共同预测jointly predict video 和 action，让模型学习建立 world transition 和 robot action 的对应关系，使得video prediction 成为 action 的隐式视觉推理器，因此拥有强大的泛化性以及知识 transfer 能力。"
@@ -76,13 +76,13 @@ DreamZero 有着强大的任务学习能力和知识 transfer 能力：
 
 
 ### 关键技术
-**1. Jointly predict & AR attention struture**
+**1. Jointly predict & AR attention structure**
 
 ![DreamZero 训练与推理 attention mask](media/dreamzero-WAM/attention-mask.png "图 2｜论文 Figure 14：DreamZero 的 attention strategy。(a) 训练时的 QKV self-attention mask：横轴为 Query，纵轴为 Key/Value。给定 conditioning frames（C0, C1, C2），模型预测下一帧 velocity（Z1, Z2, Z3）和 action（Y1, Y2, Y3）。(b) 推理时先计算条件帧的 KV-cache，再拼接上去预测 action 与 frames。例如 Y3 可以 attend 到 C0, C1, C2，把先前视觉观测当作历史。推理时 C0, C1, C2 会替换成 GT observations。来源：Ye et al., World Action Models are Zero-shot Policies，https://arxiv.org/abs/2602.15922 ；许可：CC BY 4.0。"){.narrow}
 
 
 **2. Real-time inference**
-这里面包括很多不同的技术，作者提到说predict video的tokek不是主要的inference瓶颈，最重要的在于diffusion steps和DiT model blocks number是主要的约束。
+这里面包括很多不同的技术，作者提到说predict video的token不是主要的inference瓶颈，最重要的在于diffusion steps和DiT model blocks number是主要的约束。
 
 > Ref papers: One might expect that generating only actions (not video) would accelerate inference, but at 14B scale we empirically found out that the speed gain is minimal—the number of diffusion steps and the number of DiT blocks dominate latency. Moreover, because video and action are jointly trained for strong cross-modal alignment, naively reducing action denoising steps degrades quality. This motivates DREAMZERO-Flash.
 
@@ -98,7 +98,7 @@ DreamZero 有着强大的任务学习能力和知识 transfer 能力：
 ## 关键发现
 
 1. DreamZero 开启了超越传统 VLA 和之前 WAM 的新泛化能力。
-2. DreamZero 表明，**可以从多样化、异构的数据中有效地学习通用策略**，打破了通用机器人策略需要多次重复演示的传统观念。在这之前，虽然其他 WAM 研究表明，与 VLA 相比，从视频预测中学习到的先验可以提高动作学习的样本效率（Liao 等，2025；Pai 等，2025），但大多数工作仍然集中在重复演示上。此外，即使在任务特定的后训练之后，DreamZero 的环境泛化能力仍然保留，平均 task progress 比最先进的 VLA 高出 **10%**。
+2. DreamZero 表明，**可以从多样化、异构的数据中有效地学习通用策略**，打破了通用机器人策略需要多次重复演示的传统观念。在这之前，虽然其他 WAM 研究表明，与 VLA 相比，从视频预测中学习到的先验可以提高动作学习的样本效率（Liao 等，2025；Pai 等，2025），但大多数工作仍然集中在重复演示上。此外，即使在任务特定的后训练之后，DreamZero 的环境泛化能力仍能保留，平均 task progress 比最先进的 VLA 高出 **10%**。
 3. DreamZero 展示了**两种 cross-embodiment transfer 的形式**。首先，仅通过来自另一台机器人（YAM）或人类的视频演示，就能让目标机器人（AgiBot G1）在未见过的任务上性能提升超过 **42%**，而只需要 **10–20 分钟**的数据。第二，更令人惊讶的是，DreamZero 的跨具身的少样本快速适应能力：一个在 AgiBot G1 上预训练的模型，仅用 **30 分钟**的试玩数据就能适应一台全新的机器人（YAM），同时保留零样本泛化能力。
 
 ## 我的提问
@@ -203,12 +203,12 @@ $$
 | **Fast-WAM** | 完全去掉 future slots，只看 current representation | 快很多 | 基本不掉 | 明显掉 |
 | **Faster-WAM** | 保留 future-aware latent/context，但只算一次，不 rollout 到 RGB | 比 Joint 快很多 | 更强 | 显著恢复，甚至超过 Joint |
 
-### 2.1 DreamZero 和 DreamZero-flash 从 16-step 到 4-step、1-step：应该有很大损失的吧？这种直接硬拉到few-steps的肯定有问题？
+### 2.1 DreamZero 和 DreamZero-Flash 从 16-step 到 4-step、1-step：应该有很大损失的吧？这种直接硬拉到few-steps的肯定有问题？
 
 DreamZero 原始推理使用 Flow UniPC scheduler；为了得到平滑动作，基线需要 16 个 denoising steps。
 普通 DreamZero 继续从 4-step 硬降到 1-step 时，任务进度从 83% 降至 52%，说明直接减少采样步数确实有明显损失。DreamZero-Flash 通过解耦 video 与 action 的噪声 schedule，让模型在训练时就学会“从仍然很吵的 future video 中预测干净 action”，最终把 1-step 恢复到 74%，但可以看到仍然会对准确率有很大影响。
 
-**DreamZero Few-Step / Flash 证据链**
+**DreamZero Few-Step / Flash 发展技术链**
 
 $$
 \begin{gathered}
