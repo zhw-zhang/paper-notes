@@ -181,7 +181,7 @@ $$
 
 **实验结果**：结果很意外，在robot场景下四个指标仍然按 human data scale 单调scale。这就是论文声称的第一次 human-to-robot transfer scaling law：只增加 human pre-training data，模型在完全 held-out 的 robot data 上也可预测地变好。
 
-![Dyna-2 的 human-to-robot transfer scaling law](media/dyna-2/figure7-human-to-robot-transfer.png "图 4｜论文 Figure 7：Dyna-2 首次展示了 human-to-robot transfer scaling law。在预训练中从未见过的 robot data 上评测，性能随 human data 的 scale 可预测地提升。来源：Dyna Robotics")
+![Dyna-2 的 human-to-robot transfer scaling law](media/dyna-2_details/figure7-human-to-robot-transfer.png "图 4｜论文 Figure 7：Dyna-2 首次展示了 human-to-robot transfer scaling law。在预训练中从未见过的 robot data 上评测，性能随 human data 的 scale 可预测地提升。来源：Dyna Robotics")
 
 ### 3.3 Cross-embodiment scaling 能不能迁移到 on-robot performance？ (No.3 Scaling laws Transfer)
 
