@@ -7,7 +7,7 @@ published: "2026"
 read_date: "2026-08-13"
 read_at: "2026-08-13T23:06:18+08:00"
 created_at: "2026-08-12T23:06:18+08:00"
-updated_at: "2026-08-14T01:22:00+08:00"
+updated_at: "2026-08-29T23:20:12+08:00"
 status: "已精读"
 tags: ["Summary", "Long Context", "Linear Attention", "Memory", "Video Generation"]
 one_liner: "面对超长上下文，Sparse Attention 精确保留少数 top-K 尖峰，Linear Attention 低成本覆盖大面积长尾，各有优劣，更好的答案是让二者分工结合。另外，Kimi-k3更是给出了另一份不同的答案，KDA+MLA的结合，丢掉了RoPE使得模型架构除了效率高之外，甚至还具有zero-shot外推能力。之后，Adobe的Chimera也进一步在video generation上验证了KDA+MLA这一套框架的优势。"
@@ -39,7 +39,7 @@ $$
 
 正是full attention的上述问题，因此衍生出来了下面一系列方法，用来增加模型在训练和推理时候能处理的上下文长度。具体的脉络如下：
 
-![Full Attention、Sparse Attention、Linear Attention 与混合路线总览](media/sparse-linear-attention-long-context/01-attention-landscape.png "图 1｜Full Attention 分化为 Sparse Attention 与 Linear Attention，并汇总 Sparse–Linear Hybrid、Kimi-K3 和 Chimera 三类代表案例。来源：OpenAI 内置图像生成能力按 littlewei 的笔记生成；版权：littlewei，All Rights Reserved。")
+![Full Attention、Sparse Attention、Linear Attention 与混合路线总览](media/sparse-linear-attention-long-context/01-attention-landscape.png "图 1｜Full Attention 分化为 Sparse Attention 与 Linear Attention，并汇总 Sparse–Linear Hybrid、Kimi-K3 和 Chimera 三类代表案例。来源：littlewei。")
 
 ## 核心方法
 
@@ -225,7 +225,7 @@ $$
 
 因此，Linear Attention 虽然在序列长度上非常便宜，但它本质上用固定统计量或状态替代了完整 softmax interaction，一定会损失信息。它最擅长的是大面积、相对平坦的 attention 区域，最不擅长的恰好是少数 sharp peaks。如下图所示：
 
-![一阶线性近似在平坦与尖锐 logits 上的误差](media/sparse-linear-attention-long-context/04-logist_imgs.png "图 2｜平坦分布（std=0.5）时一阶近似贴近 softmax；尖锐分布（std=2.5）时近似会变负并错过尖峰，总误差随 logits 标准差增大。来源：Haoyi Zhu, Sparse Linear Attention（https://www.haoyizhu.site/blog/sparse-linear-attention/assets/linear_approx_toy.png）；版权：Haoyi Zhu。")
+![一阶线性近似在平坦与尖锐 logits 上的误差](media/sparse-linear-attention-long-context/04-logist_imgs.png "图 2｜平坦分布（std=0.5）时一阶近似贴近 softmax；尖锐分布（std=2.5）时近似会变负并错过尖峰，总误差随 logits 标准差增大。来源：Haoyi Zhu, Sparse Linear Attention。")
 
 ### 1.2.1 KDA 系列：Vanilla → Delta → GDN → KDA
 

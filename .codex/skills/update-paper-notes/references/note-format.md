@@ -57,7 +57,7 @@ Every section is optional. Keep only the headings that help the current note; mi
 ## Figures and rights
 
 - Store figures in `content/media/<paper-slug>/`; prefer WebP and keep each file under 2 MiB.
-- Include descriptive alt text and a quoted caption containing figure number, source, and license or copyright status.
+- Include descriptive alt text and a short quoted caption containing the figure number, description, and `来源：论文名或单位名`. Do not append license or copyright-status wording to the visible caption.
 - Add only figures whose authoritative terms permit this public use. Free access alone is not permission.
 - If permission is unclear, link to the source instead of copying the figure.
 - Keep paper, media, and recap rights separate. Marking a note public does not override third-party rights.

@@ -40,10 +40,10 @@ accent_headings: []
 > 这是未来回顾时最关键的判断。
 ```
 
-可选：插入一至三张真正帮助回忆的关键图。图片存放在 `content/media/<paper-slug>/`，正文使用相对于 `content/` 的路径，并在标题中注明图号、来源和许可：
+可选：插入一至三张真正帮助回忆的关键图。图片存放在 `content/media/<paper-slug>/`，正文使用相对于 `content/` 的路径；图注只需注明图号、简短说明和来源，不再追加许可或版权状态：
 
 ```markdown
-![方法总览](media/example-paper/method-overview.webp "论文 Figure 2：方法总览。来源：作者论文，CC BY 4.0。")
+![方法总览](media/example-paper/method-overview.webp "论文 Figure 2：方法总览。来源：论文名或单位名。")
 ```
 
 行内公式使用 `$x_t = f(x_{t-1})$`。独立公式默认没有底板：
@@ -87,7 +87,7 @@ $$
 <!--
 公开分享前：
 1. 从论文或出版方官方页面确认 paper_license 和 paper_license_url；不确定时保留“未明确开放许可”。
-2. 逐张图片确认图注含来源与许可；许可不明确时不要复制图片。
+2. 逐张图片确认图注含来源，且不追加许可或版权状态；外部图片仍需在发布前确认可公开使用。
 3. 运行 `python3 scripts/manage_visibility.py`，将本篇切换为公开；管理器会把文件移到 content/papers/ 并同步 sharing。
 4. 运行 `python3 scripts/build_site.py --check-public-repo`；不要把 content/private/ 中的草稿提交到公开仓库。
 -->

@@ -481,7 +481,7 @@ accent_headings: []
       ? safeLink(paper.paper_url, "原文")
       : "原创内容";
     const noteSource = paper.note_source_url ? safeLink(paper.note_source_url, "Markdown") : "本地笔记";
-    const media = paper.media && paper.media.length ? ` · 图像许可见逐图图注` : " · 未转载论文图片";
+    const media = paper.media && paper.media.length ? ` · 图片来源见图注` : " · 未转载论文图片";
     const paperLicense = paper.paper_url ? ` · 论文 ${license}` : "";
     return `<p class="rights-line" aria-label="来源与许可">${source}${paperLicense} · 笔记 © ${escapeHtml((paper.read_date || "2026").slice(0, 4))} ${escapeHtml(paper.note_author)}, ${escapeHtml(paper.note_license)} · ${noteSource}${media}</p>`;
   }

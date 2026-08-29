@@ -123,10 +123,10 @@ accent_headings: ["核心方法", "我的判断"]
 
 行内公式使用 `$x_t$`。独立公式直接使用成对 `$$`，默认没有底板；只有需要突出某个公式时，才把起始行写成 `$$ {.boxed}`。两种写法可以在同一篇笔记中混用。
 
-图片放在 `content/media/<slug>/`，图注必须写明图号、来源和许可：
+图片放在 `content/media/<slug>/`，图注只需写明图号、简短说明和来源，不再追加许可或版权状态：
 
 ```markdown
-![方法总览](media/example-paper/method-overview.webp "论文 Figure 2：方法总览。来源：作者论文，CC BY 4.0。")
+![方法总览](media/example-paper/method-overview.webp "论文 Figure 2：方法总览。来源：论文名或单位名。")
 ```
 
 图片文件要和 Markdown 一起加入 Git。不要把 GitHub 网页编辑器生成的 `<img ...>` 片段再套进 `![...](...)` 里；大幅修改图片时，优先使用 VS Code 和本地预览。
