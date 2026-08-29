@@ -76,7 +76,8 @@
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
       .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\[([^\]]+)\]\((#section-\d+)\)/g, '<a href="$2">$1</a>');
   }
 
   function renderCallout(type, lines) {
@@ -106,11 +107,24 @@
 
   function renderBlockquote(quoteLines) {
     const blocks = quoteLines.join("\n").split(/\n\s*\n/).filter((item) => item.trim());
-    const html = blocks.map((block) => {
-      const text = block.split("\n").map((part) => part.trim()).filter(Boolean).join(" ");
-      return `<p>${inlineMarkdown(text)}</p>`;
-    }).join("");
-    return `<blockquote>${html}</blockquote>`;
+    const rendered = [];
+    let listItems = [];
+    const flushList = () => {
+      if (!listItems.length) return;
+      rendered.push(`<ul>${listItems.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`);
+      listItems = [];
+    };
+    blocks.forEach((block) => {
+      const blockLines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      if (blockLines.length && blockLines.every((line) => /^[-*]\s+/.test(line))) {
+        listItems.push(...blockLines.map((line) => line.replace(/^[-*]\s+/, "")));
+        return;
+      }
+      flushList();
+      rendered.push(`<p>${inlineMarkdown(blockLines.join(" "))}</p>`);
+    });
+    flushList();
+    return `<blockquote>${rendered.join("")}</blockquote>`;
   }
 
   function renderMarkdown(markdown = "", accentHeadings = []) {
@@ -806,6 +820,24 @@ accent_headings: []
     if (location.hash.startsWith("#paper=")) history.pushState({}, "", location.pathname + location.search);
   });
   elements.dialogContent.addEventListener("click", (event) => {
+    const sectionLink = event.target.closest('a[href^="#section-"]');
+    if (sectionLink) {
+      const sectionId = sectionLink.getAttribute("href").slice(1);
+      const target = elements.dialogContent.querySelector(`#${sectionId}`);
+      if (target) {
+        event.preventDefault();
+        setActiveToc(sectionId, false);
+        const toolbar = elements.dialog.querySelector(".reader-toolbar");
+        const toolbarOffset = (toolbar?.getBoundingClientRect().height || 0) + 16;
+        const targetTop = elements.dialog.scrollTop
+          + target.getBoundingClientRect().top
+          - elements.dialog.getBoundingClientRect().top
+          - toolbarOffset;
+        elements.dialog.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+        scheduleActiveToc();
+      }
+      return;
+    }
     const button = event.target.closest(".paper-image-button");
     if (button) openImage(button);
   });
