@@ -70,6 +70,13 @@
     return Math.max(1, Math.ceil(chineseCharacters / 350 + latinWords / 220));
   }
 
+  function paperReadingMinutes(paper = {}) {
+    const builtMinutes = Number(paper.reading_minutes);
+    return Number.isFinite(builtMinutes) && builtMinutes > 0
+      ? Math.ceil(builtMinutes)
+      : readingMinutes(paper.body);
+  }
+
   function inlineMarkdown(text) {
     return escapeHtml(text)
       .replace(/\+\+(.+?)\+\+/g, "<u>$1</u>")
@@ -603,7 +610,7 @@ accent_headings: []
     const tags = paper.tags.slice(0, 3).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
     const authorNames = paper.authors.split(",").map((name) => name.trim()).filter(Boolean);
     const cardAuthors = authorNames.length > 2 ? `${authorNames[0]} et al.` : paper.authors;
-    const minutes = readingMinutes(paper.body);
+    const minutes = paperReadingMinutes(paper);
     const updatedDate = formatCardDate(paper.updated_at || paper.created_at || paper.read_date);
     return `<article class="paper-card">
       <button class="card-button" type="button" data-slug="${escapeHtml(paper.slug)}" aria-label="打开《${escapeHtml(paper.title)}》详情">
@@ -695,7 +702,7 @@ accent_headings: []
     if (!paper) return;
     const restoreFullscreen = savedFullscreenPaper() === slug;
     const restoreScrollTop = savedReaderScroll(slug);
-    const minutes = readingMinutes(paper.body);
+    const minutes = paperReadingMinutes(paper);
     state.activePaper = paper;
     setFullscreen(false, false);
     const rendered = renderMarkdown(paper.body, Array.isArray(paper.accent_headings) ? paper.accent_headings : []);

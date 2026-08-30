@@ -28,6 +28,8 @@ Required fields:
 
 Quote all string values, keep one `key: value` per line, and avoid multiline metadata.
 
+Do not add a reading-time field to frontmatter. `scripts/build_site.py` computes `reading_minutes` from the current body during every build, so editing the prose and rebuilding is sufficient.
+
 ## Suggested sections
 
 The template offers these headings as a useful default structure:

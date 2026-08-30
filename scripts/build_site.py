@@ -7,6 +7,7 @@ import argparse
 import ast
 import hashlib
 import json
+import math
 import re
 import shutil
 import subprocess
@@ -36,6 +37,19 @@ ALLOWED_SHARING = {"private", "public"}
 
 class ContentError(ValueError):
     pass
+
+
+def estimate_reading_minutes(markdown: str) -> int:
+    """Estimate reading time from prose while ignoring non-reading Markdown noise."""
+    plain_text = str(markdown)
+    plain_text = re.sub(r"```[\s\S]*?```", " ", plain_text)
+    plain_text = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", plain_text)
+    plain_text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", plain_text)
+    plain_text = re.sub(r"<[^>]+>", " ", plain_text)
+    plain_text = re.sub(r"[#>*_`~$\\{}\[\]()|:-]", " ", plain_text)
+    chinese_characters = len(re.findall(r"[\u3400-\u9fff]", plain_text))
+    latin_words = len(re.findall(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*", plain_text))
+    return max(1, math.ceil(chinese_characters / 350 + latin_words / 220))
 
 
 def collect_images(body: str, slug: str) -> list[dict]:
@@ -140,6 +154,7 @@ def parse_note(path: Path) -> dict:
 
     metadata["slug"] = slug
     metadata["body"] = body
+    metadata["reading_minutes"] = estimate_reading_minutes(body)
     metadata["source_file"] = path.name
     metadata["source_path"] = str(path.relative_to(ROOT))
     metadata["media"] = images

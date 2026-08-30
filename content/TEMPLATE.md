@@ -1,4 +1,5 @@
 <!-- 把 private 草稿放在被 Git 忽略的 content/private/；绝对不要提交或推送敏感内容。 -->
+<!-- 阅读分钟由 scripts/build_site.py 根据正文自动计算，不需要在元数据中手填。 -->
 ---
 title: "论文完整标题"
 paper_url: "https://arxiv.org/abs/..."
