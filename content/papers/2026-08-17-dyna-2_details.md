@@ -232,7 +232,7 @@ $$
 ![Dyna-2 video 的跨 embodiment 收益](media/dyna-2/figure12-video-cross-embodiment.png "图 7｜论文 Figure 12：Video data 在规模化之后带来的收益是 cross-embodiment generalization。来源：Dyna Robotics"){.scale85}
 
 
-### 3.6 其它特性验证：WAM vs. VLA、robustness、zero-shot、instruction following
+### 3.5 其它特性验证：WAM vs. VLA、robustness、zero-shot、instruction following
 
 证明了这篇WAM使用jointly predict video prediction的好处和鲁棒性，主要作为鲁棒性测试。
 
@@ -246,7 +246,7 @@ $$
 
 **Instruction following。** 作者在场景基本相同、只改变语言指令的 counterfactual tasks 上评测，包括 push/pull Jenga、object kitting、piece stacking 与多种 napkin manipulation。Early Dyna-2 从 action-only 换成 video co-training，overall success 从 $35\%$ 到 $67\%$；再扩到 full Dyna-2 corpus 后达到 $96\%$。这进一步说明，video prediction 不只帮助视觉泛化，也给 language grounding 提供了学习“物体和动作在物理世界中意味着什么”的监督。
 
-### 3.7 One-step video generation：一直觉得这里最有意思？
+### 3.6 One-step video generation：一直觉得这里最有意思？
 
 详见 [Q1：DMD 为什么 1 steps 不行，这篇的 one-step 方案怎么做](#section-19) 的分析
 
