@@ -42,6 +42,7 @@ class ContentError(ValueError):
 def estimate_reading_minutes(markdown: str) -> int:
     """Estimate reading time from prose while ignoring non-reading Markdown noise."""
     plain_text = str(markdown)
+    plain_text = re.sub(r"<!--[\s\S]*?-->", " ", plain_text)
     plain_text = re.sub(r"```[\s\S]*?```", " ", plain_text)
     plain_text = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", plain_text)
     plain_text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", plain_text)

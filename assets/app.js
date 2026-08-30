@@ -60,6 +60,7 @@
 
   function readingMinutes(markdown = "") {
     const plainText = String(markdown)
+      .replace(/<!--[\s\S]*?-->/g, " ")
       .replace(/```[\s\S]*?```/g, " ")
       .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
       .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
@@ -135,7 +136,7 @@
   }
 
   function renderMarkdown(markdown = "", accentHeadings = []) {
-    const lines = markdown.replace(/\r/g, "").split("\n");
+    const lines = markdown.replace(/\r/g, "").replace(/<!--[\s\S]*?-->/g, "").split("\n");
     const output = [];
     const toc = [];
     let listType = null;
