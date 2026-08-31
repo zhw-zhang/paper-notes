@@ -258,9 +258,10 @@ $$
 
 ref：[ChatGPT 对话](https://chatgpt.com/s/t_6a85aae2225c81918505649cbe8dc2f0)，这里是一些具体怎么做的解析。。还是得有空猜测下作者怎么做的，感觉看着指标效果还不错。。接近 DMD-2 了（TODO）
 
-论文 Table / Figure 15 把几种采样和蒸馏方案放在一起比：Teacher 要 50 NFE，硬切到 1-step 质量崩掉（FVD 1039、motion 27%）；标准 DMD2 的 1-step 也还很糊（FVD 599）。他们自己的 1-step 只要 1 NFE、约 110ms，相对 teacher **93×** 加速，FVD 121、motion 75%、flicker 1.94——flicker 甚至低于实拍未来（2.37）和 teacher（2.69）。
+![常见几种蒸馏方案的对比结果](media/dyna-2/table-distillation-comparison.png "图 8｜常见几种蒸馏方案的对比结果：teacher 用 100 NFE、10,203 ms；硬把 steps 砍到 1（实际 2 NFE）后 FVD 从 80 掉到 1039、motion 只剩 27%；DMD2 的 2 步为 FVD 115、1 步为 599；本文的 1 步在 110 ms 下达到 FVD 121、motion 75%、flicker 1.94（低于实拍未来的 2.37 与 teacher 的 2.69）。来源：Dyna Robotics"){.scale85}
 
-为什么 1-step 通常不行：50-step teacher 走的是弯路，终点落在高质量流形上；直接 1-step 相当于直线抄近道，会落到「所有未来的平均」、出流形，画面糊。score-based 的 DMD 更近一点，但仍略偏出可靠区域。Dyna 这套把训练目标从固定 teacher 改成**跟着 student 一起动的 measure**，让 1-step 落点进 trust region，所以能同时出锐利画面和动作。
+![为什么单步很难，以及各方案落在哪里](media/dyna-2/figure16-one-step-landing.png "图 9｜论文 Figure 16：为什么单步很难，以及每种方法最终落在什么位置。画面是同一段 demo clip 的最后一帧，各机械臂使用相同指令与首帧。来源：Dyna Robotics"){.scale85}
+
 
 
 
